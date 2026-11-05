@@ -1,0 +1,7 @@
+.smcq-option-grid,.smcq-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 24px}
+.smcq-fields label{display:block;margin-bottom:5px}
+.smcq-fields input,.smcq-fields select{width:100%;max-width:100%}
+.smcq-ready{color:#008a20;font-weight:600}
+.smcq-incomplete{color:#9a4900;font-weight:600}
+#smcq-answer-readiness{font-weight:600}
+@media(max-width:782px){.smcq-option-grid,.smcq-fields{grid-template-columns:1fr}}
