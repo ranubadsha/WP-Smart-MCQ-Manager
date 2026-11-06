@@ -1,6 +1,6 @@
-# Smart MCQ Manager — Step 3 (v0.3.0)
+# Smart MCQ Manager — Step 4 (v0.4.0)
 
-A WordPress **private question bank**, now with a controlled bulk importer for UTF-8 CSV and Excel `.xlsx`. The plugin is **not yet a student examination system**.
+A WordPress **private question bank**, now with a controlled bulk importer for UTF-8 CSV and Excel `.xlsx`. The plugin now provides a private exam builder, but **does not yet deliver examinations to students**.
 
 ## Requirements
 
@@ -8,6 +8,23 @@ A WordPress **private question bank**, now with a controlled bulk importer for U
 - An admin account (`manage_options`) to run imports.
 - PHP ZIP and SimpleXML extensions **only** if importing Excel `.xlsx`; CSV does not need them.
 - A staging-site backup before upgrading an existing production installation.
+
+## Step 4: Exam Builder & Question Assignment
+
+1. Open **Smart MCQ → Exams → Add New Exam**. Enter an exam name and optional instructions in the editor.
+2. Under **Examination Settings**, choose duration (1–600 minutes), passing percentage (0–100), allowed attempts (0 = unlimited), scoring policy, optional site-local start/end dates and question/answer shuffling preferences.
+3. Under **Question Selection**, search question titles or `Q-123`/numeric IDs. Add eligible questions, remove unwanted entries, then click **Save Exam & Selected Questions**. Without JavaScript, paste comma-separated question IDs into the text box and use the normal WordPress Publish/Update button.
+4. Or configure an **Automatic Question Generator** (1–200 questions; optional subject, topic, exam source, difficulty) and click **Save Exam & Generate Questions**.
+5. Exams are admin-only `smcq_exam` posts. Question IDs remain stored in `_smcq_exam_question_ids` with an ordered, unique ID list. Settings use `_smcq_exam_*` metadata.
+
+### Rules & limitations
+
+- Only **published**, complete questions with four nonempty options and a valid A–D answer can be selected. They remain private; neither answer keys nor exam questions are exposed through an unauthenticated REST endpoint.
+- Random generation saves a new question set **only if it can find the entire requested number**. Otherwise the existing question set is retained and an admin error shown.
+- The generator considers at most the **2,000 latest matching questions**, then shuffles the eligible candidates; it is not a uniform sample of the entire bank above that threshold.
+- Manual selection caps lists at 200 unique questions. An invalid/unpublished ID is excluded with an admin warning.
+- Scheduling, attempt limits, order randomization and scoring are **configuration only** in this release. No countdown, student access, grading, registration, subscriptions or result/attempt snapshots are implemented yet. Exam question IDs point at live question records: modifying a question changes the future content of this exam until snapshot support ships.
+- All exam writes use editor permissions and WordPress nonces; authenticated title search returns no answers. Back up the database before upgrading.
 
 ## Step 3: Bulk Import
 
@@ -63,10 +80,11 @@ The question post type remains private with REST disabled. All import mutations 
 ```bash
 find . -name '*.php' -print0 | xargs -0 -n1 php -l
 php tests/test-importer-cli.php
+php tests/test-exams-cli.php
 ```
 
 **Limitations:** The importer is for administrator use and is not a publicly exposed REST API. Performance depends on the site's WordPress/database configuration. Test the preview with a small CSV on staging before importing hundreds of questions.
 
-**Next:** Step 4 — Exam builder, question selection, and scheduled exam configuration.
+**Next:** Step 5 — Authenticated frontend examination delivery with server-enforced start/end rules, private answer handling and attempt snapshots.
 
 License: GPL-2.0-or-later.

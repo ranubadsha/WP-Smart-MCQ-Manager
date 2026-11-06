@@ -3,7 +3,7 @@ Contributors: smart-mcq
 Tags: mcq, question bank, csv import, xlsx import, bangla
 Requires at least: 6.0
 Requires PHP: 7.4
-Stable tag: 0.3.0
+Stable tag: 0.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -11,7 +11,7 @@ Private question-bank plugin with CSV/XLSX bulk imports, question explanations a
 
 == Description ==
 
-Step 3 includes:
+Steps 1-4 includes:
 * Private admin-only MCQ question bank with four choices and rich explanations.
 * Subject, Topic, Exam Source, and Tag taxonomies.
 * Difficulty, Language, Exam Year, References, Marks and Negative Marks.
@@ -55,3 +55,5 @@ No. The question post type is private and its REST API disabled.
 
 = 0.1.0 =
 * Initial private question bank.
+
+Step 4 exam builder: Create private exams under Smart MCQ > Exams, configure duration and marking, select complete published questions manually, or generate a filtered set by subject, topic, source and difficulty. No student exam delivery yet.

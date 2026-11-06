@@ -1,4 +1,4 @@
-name: PHP Lint and Import Validation
+name: PHP Lint, Import and Exam Builder Tests
 on:
   push:
   pull_request:
@@ -18,3 +18,5 @@ jobs:
         run: find . -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Importer parser and validation smoke tests
         run: php tests/test-importer-cli.php
+      - name: Exam builder tests
+        run: php tests/test-exams-cli.php

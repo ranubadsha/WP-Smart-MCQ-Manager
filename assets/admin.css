@@ -5,3 +5,13 @@
 .smcq-incomplete{color:#9a4900;font-weight:600}
 #smcq-answer-readiness{font-weight:600}
 @media(max-width:782px){.smcq-option-grid,.smcq-fields{grid-template-columns:1fr}}
+
+/* Step 4: private exam builder */
+.smcq-exam-settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 2px 20px; }
+.smcq-exam-settings-grid p { margin: 12px 0; }
+.smcq-exam-settings-grid label { display: block; margin-bottom: 6px; }
+.smcq-exam-search-results { max-height: 230px; overflow: auto; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.smcq-exam-search-results .button { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.smcq-selected-list { max-height: 250px; overflow: auto; padding-left: 15px; }
+.smcq-selected-list li { padding: 6px 4px; border-bottom: 1px solid #e7e7e7; }
+.smcq-selected-list li span { overflow-wrap: anywhere; margin-right: 10px; }
