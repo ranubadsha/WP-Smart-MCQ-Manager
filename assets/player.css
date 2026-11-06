@@ -48,3 +48,7 @@
 .smcq-history-entry p { margin: .4rem 0; }
 .smcq-history-pager { display: flex; gap: .6rem; margin-top: 1rem; }
 @media (max-width: 480px) { .smcq-result-grid { grid-template-columns: 1fr 1fr; } }
+
+/* Step 10: clear notice when an exam records browser visibility signals. */
+.smcq-security-notice {border-inline-start:4px solid #946b19;background:#fff8e2;color:#49350d;padding:10px 13px;line-height:1.5;margin:10px 0;}
+.smcq-player-header .smcq-fullscreen {margin-inline-start:auto;}

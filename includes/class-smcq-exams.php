@@ -115,6 +115,10 @@ final class SMCQ_Exams {
 		<p><label><input type="checkbox" name="smcq_exam_shuffle_options" value="1" <?php checked( self::meta( $post->ID, '_smcq_exam_shuffle_options', 0 ), 1 ); ?> /> <?php esc_html_e( 'Shuffle answer order for each future attempt', 'smart-mcq-manager' ); ?></label></p>
 		<p><label><input type="checkbox" name="smcq_exam_leaderboard" value="1" <?php checked( self::meta( $post->ID, '_smcq_exam_leaderboard', 0 ), 1 ); ?> /> <?php esc_html_e( 'Publish anonymous top-10 leaderboard after the scheduled end time (requires a closing date)', 'smart-mcq-manager' ); ?></label></p>
 		<p class="description"><?php esc_html_e( 'Leaderboard is disabled by default. Only logged-in users may see pseudonymous rankings after the scheduled closing time. Shortcode: [smcq_leaderboard id="EXAM_ID"]', 'smart-mcq-manager' ); ?></p>
+		<fieldset class="smcq-security-settings"><legend><strong><?php esc_html_e( 'Exam Security (optional)', 'smart-mcq-manager' ); ?></strong></legend>
+		<p><label><input type="checkbox" name="smcq_exam_monitor_activity" value="1" <?php checked( self::meta( $post->ID, '_smcq_exam_monitor_activity', 0 ), 1 ); ?> /> <?php esc_html_e( 'Log tab visibility changes, fullscreen exits, and session conflicts (30-day retention)', 'smart-mcq-manager' ); ?></label></p>
+		<p><label><input type="checkbox" name="smcq_exam_single_tab" value="1" <?php checked( self::meta( $post->ID, '_smcq_exam_single_tab', 0 ), 1 ); ?> /> <?php esc_html_e( 'Only one active browser tab/device can edit an attempt (manual takeover allowed)', 'smart-mcq-manager' ); ?></label></p>
+		<p class="description"><?php esc_html_e( 'Monitoring and tab locking are off by default. Visibility events are not proof of cheating. Do not enable single-tab locking if students rely on unsupported browsers or embedded webviews.', 'smart-mcq-manager' ); ?></p></fieldset>
 		<p class="description"><?php esc_html_e( 'Dates use the WordPress site timezone (Settings → General). The schedule controls student admission, and the closing time limits each attempt.', 'smart-mcq-manager' ); ?></p>
 		<?php
 	}
@@ -267,6 +271,8 @@ final class SMCQ_Exams {
 		update_post_meta( $post_id, '_smcq_exam_shuffle_questions', '1' === self::posted( 'smcq_exam_shuffle_questions' ) ? 1 : 0 );
 		update_post_meta( $post_id, '_smcq_exam_shuffle_options', '1' === self::posted( 'smcq_exam_shuffle_options' ) ? 1 : 0 );
 		update_post_meta( $post_id, '_smcq_exam_leaderboard', '1' === self::posted( 'smcq_exam_leaderboard' ) ? 1 : 0 );
+		update_post_meta( $post_id, '_smcq_exam_monitor_activity', '1' === self::posted( 'smcq_exam_monitor_activity' ) ? 1 : 0 );
+		update_post_meta( $post_id, '_smcq_exam_single_tab', '1' === self::posted( 'smcq_exam_single_tab' ) ? 1 : 0 );
 
 		$start_input = self::posted( 'smcq_exam_start' );
 		$end_input = self::posted( 'smcq_exam_end' );

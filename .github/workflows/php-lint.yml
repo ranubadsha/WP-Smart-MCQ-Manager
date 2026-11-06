@@ -1,4 +1,4 @@
-name: PHP Lint, Import, Exam, Grading, Analytics, Practice and Reports Tests
+name: PHP Lint and Smart MCQ Security Tests
 on:
   push:
   pull_request:
@@ -30,6 +30,8 @@ jobs:
         run: php tests/test-practice-cli.php
       - name: Step 9 report and export tests
         run: php tests/test-reports-cli.php
+      - name: Step 10 session security helper tests
+        run: php tests/test-security-cli.php
       - name: Practice JavaScript syntax
         run: node --check assets/practice.js
       - name: Analytics JavaScript syntax

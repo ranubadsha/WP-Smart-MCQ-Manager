@@ -1,4 +1,4 @@
-/* Smart MCQ Step 6. Answer keys are fetched only after an authenticated submission. */
+/* Smart MCQ Step 10. Private exam player and optional tab monitoring. */
 (function () {
     'use strict';
     if (!window.smcqPlayerSettings) return;
@@ -15,11 +15,12 @@
         button.addEventListener('click', handler);
         return button;
     };
-    var request = async function (path, method, body) {
+    var request = async function (path, method, body, clientId) {
         var options = {
             method: method || 'GET', credentials: 'same-origin', cache: 'no-store',
             headers: { 'X-WP-Nonce': settings.nonce }
         };
+        if (clientId) options.headers['X-SMCQ-Client-Id'] = clientId;
         if (body !== undefined) {
             options.headers['Content-Type'] = 'application/json';
             options.body = JSON.stringify(body);
@@ -29,6 +30,8 @@
         if (!response.ok) {
             var error = new Error((data && data.message) || settings.messages.error);
             error.status = response.status;
+            error.code = data && data.code;
+            error.attemptId = data && data.data && data.data.attemptId;
             throw error;
         }
         return data;
@@ -61,6 +64,51 @@
         var unsaved = false;
         var ended = false;
         var saveError = '';
+        var heartbeatId = null;
+        var hadFullscreen = false;
+        var clientId = (function () {
+            var key = 'smcq-client-id-' + examId;
+            try {
+                var known = sessionStorage.getItem(key);
+                if (known && /^[a-f0-9]{32}$/.test(known)) return known;
+            } catch (e) { /* Private browsing may restrict storage. */ }
+            if (!window.crypto || !window.crypto.getRandomValues) return '';
+            var bytes = new Uint8Array(16);
+            window.crypto.getRandomValues(bytes);
+            var token = Array.prototype.map.call(bytes, function (n) { return ('0' + n.toString(16)).slice(-2); }).join('');
+            try { sessionStorage.setItem(key, token); } catch (e) { /* Session valid for this page load. */ }
+            return token;
+        })();
+        function playerRequest(path, method, data) { return request(path, method, data, clientId); }
+        function stopHeartbeat() {
+            if (heartbeatId !== null) clearInterval(heartbeatId);
+            heartbeatId = null;
+        }
+        function startHeartbeat() {
+            stopHeartbeat();
+            if (!active || !active.security || !active.security.singleTab) return;
+            heartbeatId = setInterval(async function () {
+                if (!active || ended) return;
+                try {
+                    var response = await playerRequest('attempts/' + active.attemptId + '/ping', 'POST', {});
+                    timeOffset = response.serverNow - Date.now();
+                } catch (error) { if (error.code === 'smcq_session_conflict') handleConflict(error); }
+            }, 45000);
+        }
+        function handleConflict(error) {
+            active = null; ended = true; stopTimer(); stopHeartbeat(); clearBody();
+            message(error.message || 'This exam is active in another tab.', true);
+            body.appendChild(create('p', 'smcq-note', 'Only one tab can edit this attempt. You may continue here, which will close the other tab’s editing session.'));
+            if (error.attemptId) {
+                body.appendChild(makeButton('Continue this attempt here', 'smcq-button smcq-primary', async function () {
+                    try {
+                        await playerRequest('attempts/' + error.attemptId + '/takeover', 'POST', {});
+                        await load();
+                    } catch (err) { message(err.message, true); }
+                }));
+            }
+            body.appendChild(makeButton('Reload Examination', 'smcq-button', load));
+        }
 
         function message(text, error) {
             status.textContent = text || '';
@@ -85,19 +133,21 @@
             message(settings.messages.loading);
             clearBody();
             try {
-                var state = await request('exams/' + examId + '/state');
+                var state = await playerRequest('exams/' + examId + '/state');
                 if (state.status === 'active') showAttempt(state);
                 else showReady(state);
-            } catch (error) { message(error.message, true); }
+            } catch (error) { if (error.code === 'smcq_session_conflict') handleConflict(error); else message(error.message, true); }
         }
         function showReady(state) {
             active = null;
             ended = true;
-            stopTimer();
+            stopTimer(); stopHeartbeat();
             clearBody();
             body.appendChild(create('h2', 'smcq-exam-title', state.examTitle || 'Examination'));
             if (state.instructions) body.appendChild(create('p', 'smcq-exam-instructions', state.instructions));
             if (state.message) body.appendChild(create('p', 'smcq-note', state.message));
+            if (state.security && state.security.monitor) body.appendChild(create('p', 'smcq-security-notice', 'Exam notice: tab visibility changes and fullscreen exits are logged for administrator review. These events do not automatically affect your score.'));
+            if (state.security && state.security.singleTab) body.appendChild(create('p', 'smcq-security-notice', 'Only one browser tab or device may edit this attempt at a time.'));
             body.appendChild(create('p', 'smcq-meta', 'Duration: ' + state.duration + ' min · Attempts: ' + state.attemptsUsed + (state.attemptLimit ? ' / ' + state.attemptLimit : ' (unlimited)')));
             if (state.lastAttemptId) {
                 body.appendChild(makeButton('View Latest Result', 'smcq-button smcq-result-link', function () {
@@ -109,8 +159,8 @@
                     if (busy) return;
                     busy = true;
                     message(settings.messages.loading);
-                    try { showAttempt(await request('exams/' + examId + '/start', 'POST', {})); }
-                    catch (error) { message(error.message, true); }
+                    try { showAttempt(await playerRequest('exams/' + examId + '/start', 'POST', {})); }
+                    catch (error) { if (error.code === 'smcq_session_conflict') handleConflict(error); else message(error.message, true); }
                     finally { busy = false; }
                 }));
                 message('Ready to begin. Your countdown starts when you press Start Examination.');
@@ -128,6 +178,7 @@
             timeOffset = state.serverNow - Date.now();
             stopTimer();
             timerId = setInterval(tick, 1000);
+            startHeartbeat();
             render();
             tick();
         }
@@ -151,6 +202,12 @@
             header.appendChild(create('h2', 'smcq-exam-title', active.examTitle || 'Examination'));
             header.appendChild(create('div', 'smcq-timer'));
             body.appendChild(header);
+            if (active.security && active.security.monitor) body.appendChild(create('p', 'smcq-security-notice', 'Security monitoring enabled: leaving this tab is logged for review, not an automatic penalty.'));
+            if (root.requestFullscreen) {
+                header.appendChild(makeButton('Fullscreen', 'smcq-button smcq-fullscreen', function () {
+                    root.requestFullscreen().catch(function () { message('Fullscreen mode is unavailable in this browser.', true); });
+                }));
+            }
             body.appendChild(create('p', 'smcq-progress', 'Question ' + (index + 1) + ' of ' + questions.length + ' · Answered: ' + answered));
             var form = create('fieldset', 'smcq-question');
             form.appendChild(create('legend', '', question.title));
@@ -202,7 +259,7 @@
             message(settings.messages.saving);
             render();
             try {
-                var result = await request('attempts/' + active.attemptId + '/answer', 'POST', {
+                var result = await playerRequest('attempts/' + active.attemptId + '/answer', 'POST', {
                     questionId: questionId, choice: choice, version: active.version
                 });
                 active.answers = result.answers;
@@ -213,7 +270,8 @@
             } catch (error) {
                 saveError = error.status === 409 ? settings.messages.conflict : error.message;
                 message(saveError, true);
-                if (error.status === 409) { stopTimer(); ended = true; body.appendChild(makeButton('Reload Attempt', 'smcq-button', load)); }
+                if (error.code === 'smcq_session_conflict') handleConflict(error);
+                else if (error.status === 409) { stopTimer(); stopHeartbeat(); ended = true; body.appendChild(makeButton('Reload Attempt', 'smcq-button', load)); }
             } finally {
                 unsaved = false;
                 busy = false;
@@ -226,9 +284,9 @@
             busy = true;
             message('Submitting examination…');
             try {
-                var result = await request('attempts/' + active.attemptId + '/submit', 'POST', {});
+                var result = await playerRequest('attempts/' + active.attemptId + '/submit', 'POST', {});
                 showFinished(result);
-            } catch (error) { message(error.message, true); }
+            } catch (error) { if (error.code === 'smcq_session_conflict') handleConflict(error); else message(error.message, true); }
             finally { busy = false; }
         }
         function gradeCard(result) {
@@ -281,11 +339,11 @@
         async function viewResult(attemptId) {
             ended = true;
             active = null;
-            stopTimer();
+            stopTimer(); stopHeartbeat();
             clearBody();
             message('Loading result…');
             try {
-                showFinished(await request('attempts/' + attemptId + '/result'));
+                showFinished(await playerRequest('attempts/' + attemptId + '/result'));
             } catch (error) {
                 message(error.message, true);
                 body.appendChild(makeButton('Back to Exam', 'smcq-button', load));
@@ -295,7 +353,7 @@
             ended = true;
             active = null;
             unsaved = false;
-            stopTimer();
+            stopTimer(); stopHeartbeat();
             clearBody();
             if (result && result.grade) {
                 body.appendChild(gradeCard(result));
@@ -310,6 +368,17 @@
             }
             body.appendChild(makeButton('Back to Exam', 'smcq-button', load));
         }
+        document.addEventListener('visibilitychange', function () {
+            if (!active || ended || !active.security || !active.security.monitor) return;
+            playerRequest('attempts/' + active.attemptId + '/activity', 'POST', { event: document.hidden ? 'tab_hidden' : 'tab_visible' }).catch(function () {});
+        });
+        document.addEventListener('fullscreenchange', function () {
+            var nowFullscreen = document.fullscreenElement === root;
+            if (hadFullscreen && !nowFullscreen && active && !ended && active.security && active.security.monitor) {
+                playerRequest('attempts/' + active.attemptId + '/activity', 'POST', { event: 'fullscreen_exit' }).catch(function () {});
+            }
+            hadFullscreen = nowFullscreen;
+        });
         window.addEventListener('beforeunload', function (event) {
             if (unsaved) { event.preventDefault(); event.returnValue = settings.messages.unsaved; }
         });

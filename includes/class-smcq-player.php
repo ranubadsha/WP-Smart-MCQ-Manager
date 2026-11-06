@@ -1,6 +1,6 @@
 <?php
 /**
- * Step 6: Authenticated exams, atomic grading, private results, and attempt history.
+ * Step 10: Authenticated exams, frozen grading, privacy and optional session security.
  *
  * @package SmartMCQManager
  */
@@ -245,6 +245,10 @@ final class SMCQ_Player {
 			) );
 			$row = self::load_attempt( (int) $row['id'], (int) $row['user_id'] );
 			if ( 1 === $updated || ( $row && 'submitted' === $row['status'] ) ) {
+				if ( 1 === $updated && $row ) {
+					SMCQ_Security::record( $row, 'timeout' === $reason ? 'attempt_timeout' : 'attempt_submitted' );
+				}
+				SMCQ_Security::release( (int) $row['id'] );
 				return self::ensure_graded( $row );
 			}
 		}
@@ -363,6 +367,7 @@ final class SMCQ_Player {
 			'serverNow' => self::utc_now() * 1000,
 			'version' => (int) $row['version'],
 			'questions' => self::public_questions( $snapshot ),
+			'security' => SMCQ_Security::settings( (int) $row['exam_id'] ),
 			'answers' => is_array( $answers ) ? $answers : array(),
 		);
 	}
@@ -383,6 +388,8 @@ final class SMCQ_Player {
 			$row = self::finalize_if_due( $row );
 			if ( is_wp_error( $row ) ) { return $row; }
 			if ( 'active' === $row['status'] ) {
+				$guard = SMCQ_Security::authorize( $row, $request );
+				if ( is_wp_error( $guard ) ) { return $guard; }
 				return rest_ensure_response( self::view( $row ) );
 			}
 		}
@@ -394,6 +401,7 @@ final class SMCQ_Player {
 			'status' => 'idle', 'examTitle' => get_the_title( $exam_id ),
 			'instructions' => wp_strip_all_tags( (string) get_post_field( 'post_content', $exam_id ), true ),
 			'duration' => $config['duration'], 'attemptsUsed' => $count,
+			'security' => SMCQ_Security::settings( $exam_id ),
 			'attemptLimit' => $config['attempt_limit'],
 			'lastAttemptId' => $last && 'submitted' === $last['status'] ? (int) $last['id'] : null,
 			'canStart' => ! is_wp_error( $window ) && ( 0 === $config['attempt_limit'] || $count < $config['attempt_limit'] ),
@@ -419,6 +427,8 @@ final class SMCQ_Player {
 			$existing = self::finalize_if_due( $existing );
 			if ( is_wp_error( $existing ) ) { return $existing; }
 			if ( 'active' === $existing['status'] ) {
+				$guard = SMCQ_Security::authorize( $existing, $request );
+				if ( is_wp_error( $guard ) ) { return $guard; }
 				return rest_ensure_response( self::view( $existing ) );
 			}
 		}
@@ -450,11 +460,19 @@ final class SMCQ_Player {
 			if ( $existing ) {
 				$existing = self::finalize_if_due( $existing );
 				if ( is_wp_error( $existing ) ) { return $existing; }
+				if ( 'active' === $existing['status'] ) {
+					$guard = SMCQ_Security::authorize( $existing, $request );
+					if ( is_wp_error( $guard ) ) { return $guard; }
+				}
 				return rest_ensure_response( 'active' === $existing['status'] ? self::view( $existing ) : self::minimal_view( $existing ) );
 			}
 			return self::error( 'smcq_attempt_failed', __( 'Could not create an attempt. Please retry.', 'smart-mcq-manager' ), 500 );
 		}
-		return rest_ensure_response( self::view( self::load_attempt( (int) $wpdb->insert_id, $user ) ) );
+		$created = self::load_attempt( (int) $wpdb->insert_id, $user );
+		SMCQ_Security::record( $created, 'attempt_started' );
+		$guard = SMCQ_Security::authorize( $created, $request );
+		if ( is_wp_error( $guard ) ) { return $guard; }
+		return rest_ensure_response( self::view( $created ) );
 	}
 
 	public static function answer( $request ) {
@@ -470,6 +488,8 @@ final class SMCQ_Player {
 		if ( 'active' !== $row['status'] ) {
 			return self::error( 'smcq_already_finished', __( 'This attempt is already finished.', 'smart-mcq-manager' ), 409 );
 		}
+		$guard = SMCQ_Security::authorize( $row, $request );
+		if ( is_wp_error( $guard ) ) { return $guard; }
 		$question_id = $request->get_param( 'questionId' );
 		$choice = $request->get_param( 'choice' );
 		$version = $request->get_param( 'version' );
@@ -507,6 +527,8 @@ final class SMCQ_Player {
 			return self::error( 'smcq_no_attempt', __( 'Attempt not found.', 'smart-mcq-manager' ), 404 );
 		}
 		if ( 'active' === $row['status'] ) {
+			$guard = SMCQ_Security::authorize( $row, $request );
+			if ( is_wp_error( $guard ) ) { return $guard; }
 			$row = self::finish( $row, 'manual' );
 		}
 		if ( is_wp_error( $row ) ) { return $row; }
