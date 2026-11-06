@@ -113,6 +113,8 @@ final class SMCQ_Exams {
 		</div>
 		<p><label><input type="checkbox" name="smcq_exam_shuffle_questions" value="1" <?php checked( self::meta( $post->ID, '_smcq_exam_shuffle_questions', 0 ), 1 ); ?> /> <?php esc_html_e( 'Shuffle question order for each future attempt', 'smart-mcq-manager' ); ?></label></p>
 		<p><label><input type="checkbox" name="smcq_exam_shuffle_options" value="1" <?php checked( self::meta( $post->ID, '_smcq_exam_shuffle_options', 0 ), 1 ); ?> /> <?php esc_html_e( 'Shuffle answer order for each future attempt', 'smart-mcq-manager' ); ?></label></p>
+		<p><label><input type="checkbox" name="smcq_exam_leaderboard" value="1" <?php checked( self::meta( $post->ID, '_smcq_exam_leaderboard', 0 ), 1 ); ?> /> <?php esc_html_e( 'Publish anonymous top-10 leaderboard after the scheduled end time (requires a closing date)', 'smart-mcq-manager' ); ?></label></p>
+		<p class="description"><?php esc_html_e( 'Leaderboard is disabled by default. Only logged-in users may see pseudonymous rankings after the scheduled closing time. Shortcode: [smcq_leaderboard id="EXAM_ID"]', 'smart-mcq-manager' ); ?></p>
 		<p class="description"><?php esc_html_e( 'Dates use the WordPress site timezone (Settings → General). The schedule controls student admission, and the closing time limits each attempt.', 'smart-mcq-manager' ); ?></p>
 		<?php
 	}
@@ -264,6 +266,7 @@ final class SMCQ_Exams {
 		update_post_meta( $post_id, '_smcq_exam_negative', $negative );
 		update_post_meta( $post_id, '_smcq_exam_shuffle_questions', '1' === self::posted( 'smcq_exam_shuffle_questions' ) ? 1 : 0 );
 		update_post_meta( $post_id, '_smcq_exam_shuffle_options', '1' === self::posted( 'smcq_exam_shuffle_options' ) ? 1 : 0 );
+		update_post_meta( $post_id, '_smcq_exam_leaderboard', '1' === self::posted( 'smcq_exam_leaderboard' ) ? 1 : 0 );
 
 		$start_input = self::posted( 'smcq_exam_start' );
 		$end_input = self::posted( 'smcq_exam_end' );

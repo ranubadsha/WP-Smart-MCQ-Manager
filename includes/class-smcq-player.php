@@ -310,9 +310,18 @@ final class SMCQ_Player {
 				'points' => '' === $points ? 1.0 : (float) $points,
 				'negative' => '' === $negative ? 0.0 : (float) $negative,
 				'explanation' => wp_strip_all_tags( (string) get_post_meta( $id, '_smcq_explanation', true ), true ),
+				// Frozen topic metadata supports accurate historical analytics after taxonomy edits.
+				'subjects' => self::snapshot_terms( $id, 'smcq_subject' ),
+				'topics' => self::snapshot_terms( $id, 'smcq_topic' ),
+				'difficulty' => (string) get_post_meta( $id, '_smcq_difficulty', true ),
 			);
 		}
 		return array( 'questions' => $questions, 'policy' => array( 'pass_percent' => $config['pass_percent'] ) );
+	}
+
+	private static function snapshot_terms( $id, $taxonomy ) {
+		$names = wp_get_post_terms( $id, $taxonomy, array( 'fields' => 'names' ) );
+		return is_wp_error( $names ) || ! is_array( $names ) ? array() : array_values( array_map( 'strval', $names ) );
 	}
 
 	/** Redact answer keys, grade fields, and future correct-answer metadata. */

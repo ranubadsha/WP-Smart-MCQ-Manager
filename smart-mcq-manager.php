@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Smart MCQ Manager
- * Description: Private MCQ bank, CSV/XLSX import, exam builder, and authenticated student exam interface.
- * Version: 0.6.0
+ * Description: Private MCQ bank, CSV/XLSX import, exam builder, and authenticated examinations, grading and analytics.
+ * Version: 0.7.0
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Text Domain: smart-mcq-manager
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'SMCQ_VERSION' ) ) {
-	define( 'SMCQ_VERSION', '0.6.0' );
+	define( 'SMCQ_VERSION', '0.7.0' );
 }
 if ( ! defined( 'SMCQ_DIR' ) ) {
 	define( 'SMCQ_DIR', plugin_dir_path( __FILE__ ) );
@@ -32,6 +32,8 @@ SMCQ_Exams::init();
 require_once SMCQ_DIR . 'includes/class-smcq-results.php';
 require_once SMCQ_DIR . 'includes/class-smcq-player.php';
 SMCQ_Player::init();
+require_once SMCQ_DIR . 'includes/class-smcq-analytics.php';
+SMCQ_Analytics::init();
 
 register_activation_hook( __FILE__, static function () {
 	SMCQ_Player::install();
