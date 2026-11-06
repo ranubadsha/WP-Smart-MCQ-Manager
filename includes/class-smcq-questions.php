@@ -46,6 +46,8 @@ final class SMCQ_Questions {
 			'menu_icon'           => 'dashicons-welcome-learn-more',
 			'supports'            => array( 'title', 'revisions' ),
 			'map_meta_cap'       => true,
+            'capability_type' => array( 'smcq_question', 'smcq_questions' ),
+            'capabilities' => array( 'create_posts' => 'create_smcq_questions' ),
 		) );
 
 		$taxonomies = array(
@@ -66,6 +68,7 @@ final class SMCQ_Questions {
 				'show_ui'           => true,
 				'show_admin_column' => true,
 				'show_in_rest'      => false,
+                'capabilities' => array( 'manage_terms' => 'publish_smcq_questions', 'edit_terms' => 'publish_smcq_questions', 'delete_terms' => 'publish_smcq_questions', 'assign_terms' => 'edit_smcq_questions' ),
 			) );
 		}
 	}

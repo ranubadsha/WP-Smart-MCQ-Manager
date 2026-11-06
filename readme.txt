@@ -2,33 +2,34 @@
 Contributors: smart-mcq
 Requires at least: 6.0
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPLv2 or later
 
-Private WordPress MCQ question bank, automatic examinations and grading, analytics, revision, paid exams, question types, optional question reporting and Gutenberg blocks.
+WordPress private MCQ question bank, exam player, grading, analytics, revision, question editorial workflow and optional WooCommerce paid access.
 
 == Description ==
 
-v1.3.0 builds on v1.2.0. It extends question presentation and answer formats (single, multiple, True/False, passage, image, audio, plain-text math), adds structured JSON import, question issue reports, dynamic blocks, and printable pass certificates. It preserves prior exams, questions and data.
+Release v1.4.0 adds custom question author/reviewer roles, question metadata history and restoration, duplicate review, DOCX table import, single/multiple/True-False structured import, Daily/Weekly/Custom practice modes, admin live counts, achievement badges and optional administrator-only AI question drafts.
 
-This release does not include all original roadmap features, and requires staging validation before production deployment. See README.md for precise scope and limitations.
+Existing exam, report, security and commerce modules remain. Read README.md for staging, security, privacy and limitations.
 
 == Installation ==
 
-1. Back up WordPress database and plugin directory.
-2. Upgrade on staging using Plugins > Add New > Upload Plugin.
-3. Test question formats, exam grading, privacy and payment access before production.
+1. Backup database and plugin files; test on staging.
+2. Upload ZIP via Plugins > Add New > Upload Plugin > Replace current with uploaded.
+3. Test editorial role migration and access to existing questions.
+4. Visit Smart MCQ > System Status to inspect table/index status.
+5. Test exam and paid exam access before production.
 
 == Changelog ==
 
-= 1.3.0 =
-* Add more question formats with frozen answer snapshots and exact-set grading.
-* Improve student exam and practice frontends for checkbox answers and context media.
-* Add structured JSON question imports to existing import wizard.
-* Add owned-attempt student question error reports and admin-only issue review.
-* Add dynamic Gutenberg Exam/Dashboard/Practice/History blocks.
-* Add private, printable pass certificates.
-* Add regression tests covering new scoring and imports.
+= 1.4.0 =
+* Add question editorial roles, review and metadata version restore.
+* Add duplicate review, DOCX table parser, structured multiple-answer import.
+* Add custom, daily and weekly quiz practice, live attempt monitor and badges.
+* Add optional API-driven AI question drafts (unpublished only).
+* Add new test coverage and WordPress integration workflow (not yet run here).
 
-= 1.2.0 =
-* Add indexes, System Status and schema maintenance.
+== Important ==
+
+Do not treat this plugin as fully production certified: live WooCommerce, AI, DOCX/XLSX, stress, WordPress integration and independent security testing are still required.

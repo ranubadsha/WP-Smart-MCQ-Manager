@@ -1,6 +1,6 @@
 <?php
 /**
- * Step 3: Private, administrator-only CSV/XLSX question importer.
+ * Step 3: Private, administrator-only CSV/XLSX/DOCX/JSON question importer.
  * Never exposes the question bank or import preview through public endpoints.
  *
  * @package SmartMCQManager
@@ -72,7 +72,7 @@ final class SMCQ_Importer {
 		?>
 		<div class="wrap smcq-import-wrap">
 			<h1><?php esc_html_e( 'Bulk Import MCQ Questions', 'smart-mcq-manager' ); ?></h1>
-			<p><?php esc_html_e( 'Upload UTF-8 CSV, Excel XLSX, or structured JSON. Review the column mapping before importing. Existing questions are never overwritten.', 'smart-mcq-manager' ); ?></p>
+			<p><?php esc_html_e( 'Upload UTF-8 CSV, Excel XLSX, Word DOCX tables, or structured JSON. Review the column mapping before importing. Existing questions are never overwritten.', 'smart-mcq-manager' ); ?></p>
 			<?php if ( isset( $errors[ $error ] ) ) : ?>
 				<div class="notice notice-error"><p><?php echo esc_html( $errors[ $error ] ); ?></p></div>
 			<?php endif; ?>
@@ -96,8 +96,8 @@ final class SMCQ_Importer {
 					<form enctype="multipart/form-data" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 						<input type="hidden" name="action" value="smcq_import_preview" />
 						<?php wp_nonce_field( 'smcq_import_preview' ); ?>
-						<p><label for="smcq_import_file"><strong><?php esc_html_e( 'Question file (.csv, .xlsx or .json)', 'smart-mcq-manager' ); ?></strong></label></p>
-						<p><input required type="file" id="smcq_import_file" name="smcq_import_file" accept=".csv,.xlsx,.json,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" /></p>
+						<p><label for="smcq_import_file"><strong><?php esc_html_e( 'Question file (.csv, .xlsx, .docx or .json)', 'smart-mcq-manager' ); ?></strong></label></p>
+						<p><input required type="file" id="smcq_import_file" name="smcq_import_file" accept=".csv,.xlsx,.docx,.json,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document" /></p>
 						<p class="description"><?php esc_html_e( 'Up to 500 questions and 3 MiB per upload. First worksheet only for XLSX. UTF-8 CSV recommended for maximum compatibility.', 'smart-mcq-manager' ); ?></p>
 						<?php submit_button( __( 'Upload & Preview', 'smart-mcq-manager' ) ); ?>
 					</form>
@@ -124,10 +124,10 @@ final class SMCQ_Importer {
 			self::redirect_error( 'bad_file' );
 		}
 		$extension = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
-		if ( ! in_array( $extension, array( 'csv', 'xlsx', 'json' ), true ) ) {
+		if ( ! in_array( $extension, array( 'csv', 'xlsx', 'docx', 'json' ), true ) ) {
 			self::redirect_error( 'bad_file' );
 		}
-		$data = 'csv' === $extension ? self::parse_csv( $file['tmp_name'] ) : ( 'json' === $extension ? self::parse_json( $file['tmp_name'] ) : self::parse_xlsx( $file['tmp_name'] ) );
+		$data = 'csv' === $extension ? self::parse_csv( $file['tmp_name'] ) : ( 'json' === $extension ? self::parse_json( $file['tmp_name'] ) : ( 'docx' === $extension ? self::parse_docx( $file['tmp_name'] ) : self::parse_xlsx( $file['tmp_name'] ) ) );
 		if ( is_wp_error( $data ) || strlen( serialize( $data ) ) > 2097152 ) {
 			self::redirect_error( 'bad_file' );
 		}
@@ -159,7 +159,9 @@ final class SMCQ_Importer {
 			'option_b'       => __( 'Option B *', 'smart-mcq-manager' ),
 			'option_c'       => __( 'Option C *', 'smart-mcq-manager' ),
 			'option_d'       => __( 'Option D *', 'smart-mcq-manager' ),
-			'correct'        => __( 'Correct Answer (A–D) *', 'smart-mcq-manager' ),
+			'correct'        => __( 'Correct Answer (A–D or comma-separated A,C) *', 'smart-mcq-manager' ),
+            'question_type'  => __( 'Question type (single/multiple/true_false/passage/math)', 'smart-mcq-manager' ),
+            'passage' => __( 'Reading passage text', 'smart-mcq-manager' ),
 			'explanation'    => __( 'Explanation', 'smart-mcq-manager' ),
 			'subject'        => __( 'Subject', 'smart-mcq-manager' ),
 			'topic'          => __( 'Topic', 'smart-mcq-manager' ),
@@ -176,11 +178,11 @@ final class SMCQ_Importer {
 	}
 
 	private static function required_fields() {
-		return array( 'question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct' );
+		return array( 'question', 'option_a', 'option_b', 'correct' );
 	}
 
 	private static function suggested_mapping( $headers ) {
-		$aliases = array( 'answer' => 'correct', 'correct_answer' => 'correct', 'optiona' => 'option_a', 'optionb' => 'option_b', 'optionc' => 'option_c', 'optiond' => 'option_d', 'exam' => 'exam_source', 'year' => 'exam_year', 'negative' => 'negative_marks' );
+		$aliases = array( 'answer' => 'correct', 'correct_answer' => 'correct', 'optiona' => 'option_a', 'optionb' => 'option_b', 'optionc' => 'option_c', 'optiond' => 'option_d', 'exam' => 'exam_source', 'year' => 'exam_year', 'negative' => 'negative_marks', 'type' => 'question_type', 'correct_keys' => 'correct' );
 		$fields = self::field_labels();
 		$mapping = array();
 		foreach ( $headers as $index => $header ) {
@@ -363,10 +365,19 @@ final class SMCQ_Importer {
 				return new WP_Error( 'length', __( 'Question or option text is too long.', 'smart-mcq-manager' ) );
 			}
 		}
-		$row['correct'] = strtoupper( $row['correct'] );
-		if ( ! in_array( $row['correct'], array( 'A', 'B', 'C', 'D' ), true ) ) {
-			return new WP_Error( 'answer', __( 'Correct answer must be A, B, C or D.', 'smart-mcq-manager' ) );
-		}
+        $type = strtolower( trim( $row['question_type'] ) ) ?: 'single';
+        if ( ! in_array( $type, array( 'single', 'multiple', 'true_false', 'passage', 'math' ), true ) ) {
+            return new WP_Error( 'question_type', __( 'Unsupported imported question type.', 'smart-mcq-manager' ) );
+        }
+        $row['question_type'] = $type;
+        $row['correct'] = strtoupper( preg_replace( '/\s+/', '', $row['correct'] ) );
+        $row['passage'] = sanitize_textarea_field( $row['passage'] );
+        $options = array( 'A' => $row['option_a'], 'B' => $row['option_b'], 'C' => $row['option_c'], 'D' => $row['option_d'] );
+        $answer = SMCQ_Question_Types::canonical( $row['correct'], $type, $options );
+        if ( null === $answer || ! SMCQ_Question_Types::ready( $type, $options, $answer, $row['passage'] ) ) {
+            return new WP_Error( 'answer', __( 'Invalid options, answer combination, or passage for this question type.', 'smart-mcq-manager' ) );
+        }
+        $row['correct'] = $answer;
 		$row['difficulty'] = strtolower( trim( $row['difficulty'] ) ) ?: 'easy';
 		$row['language'] = strtolower( trim( $row['language'] ) ) ?: 'bn';
 		if ( ! in_array( $row['difficulty'], array( 'easy', 'medium', 'hard' ), true ) ) {
@@ -430,7 +441,14 @@ final class SMCQ_Importer {
 			return is_wp_error( $post_id ) ? $post_id : new WP_Error( 'insert_failed', __( 'Could not create this question.', 'smart-mcq-manager' ) );
 		}
 		update_post_meta( $post_id, '_smcq_options', array( 'A' => $row['option_a'], 'B' => $row['option_b'], 'C' => $row['option_c'], 'D' => $row['option_d'] ) );
-		update_post_meta( $post_id, '_smcq_correct', $row['correct'] );
+        update_post_meta( $post_id, '_smcq_type', $row['question_type'] );
+        update_post_meta( $post_id, '_smcq_passage', $row['passage'] );
+        if ( 'multiple' === $row['question_type'] ) {
+            update_post_meta( $post_id, '_smcq_correct_keys', explode( ',', $row['correct'] ) );
+            update_post_meta( $post_id, '_smcq_correct', explode( ',', $row['correct'] )[0] );
+        } else {
+            update_post_meta( $post_id, '_smcq_correct', $row['correct'] );
+        }
 		update_post_meta( $post_id, '_smcq_explanation', $row['explanation'] );
 		update_post_meta( $post_id, '_smcq_difficulty', $row['difficulty'] );
 		update_post_meta( $post_id, '_smcq_language', $row['language'] );
@@ -474,8 +492,8 @@ final class SMCQ_Importer {
 		if ( false === $file ) { wp_die( 'Could not create template.' ); }
 		fwrite( $file, "\xEF\xBB\xBF" );
 		fputcsv( $file, array_keys( self::field_labels() ) );
-		fputcsv( $file, array( 'What is the capital of Bangladesh?', 'Dhaka', 'Khulna', 'Rajshahi', 'Sylhet', 'A', 'Dhaka is the capital.', 'General Knowledge', 'Bangladesh', 'BCS', 'Geography|Bangladesh', 'easy', 'en', '2025', 'General Knowledge Book', 'https://example.org/', '1', '0.25' ) );
-		fputcsv( $file, array( 'বাংলাদেশের রাজধানী কোনটি?', 'ঢাকা', 'চট্টগ্রাম', 'খুলনা', 'সিলেট', 'A', 'ঢাকা বাংলাদেশের রাজধানী।', 'সাধারণ জ্ঞান', 'বাংলাদেশ বিষয়াবলি', 'বিসিএস', 'বাংলাদেশ', 'easy', 'bn', '2026', '', '', '1', '0' ) );
+		fputcsv( $file, array( 'What is the capital of Bangladesh?', 'Dhaka', 'Khulna', 'Rajshahi', 'Sylhet', 'A', 'single', '', 'Dhaka is the capital.', 'General Knowledge', 'Bangladesh', 'BCS', 'Geography|Bangladesh', 'easy', 'en', '2025', 'General Knowledge Book', 'https://example.org/', '1', '0.25' ) );
+		fputcsv( $file, array( 'বাংলাদেশের রাজধানী কোনটি?', 'ঢাকা', 'চট্টগ্রাম', 'খুলনা', 'সিলেট', 'A', 'single', '', 'ঢাকা বাংলাদেশের রাজধানী।', 'সাধারণ জ্ঞান', 'বাংলাদেশ বিষয়াবলি', 'বিসিএস', 'বাংলাদেশ', 'easy', 'bn', '2026', '', '', '1', '0' ) );
 		fclose( $file );
 		exit;
 	}
@@ -509,6 +527,53 @@ final class SMCQ_Importer {
 		}
 		return self::finalize_rows( $headers, $rows );
 	}
+
+    /** DOCX table import. Expects the first row of the first table to contain column names. */
+    public static function parse_docx( $path ) {
+        if ( ! class_exists( 'ZipArchive' ) || ! class_exists( 'DOMDocument' ) ) {
+            return new WP_Error( 'extensions', 'DOCX import needs PHP ZIP and DOM extensions.' );
+        }
+        if ( ! is_file( $path ) || filesize( $path ) > self::MAX_BYTES ) { return new WP_Error( 'size', 'Invalid DOCX size.' ); }
+        $zip = new ZipArchive();
+        if ( true !== $zip->open( $path ) ) { return new WP_Error( 'zip', 'Cannot open DOCX.' ); }
+        try {
+            if ( $zip->numFiles > 750 ) { return new WP_Error( 'entries', 'Too many DOCX components.' ); }
+            $stat = $zip->statName( 'word/document.xml' );
+            if ( ! $stat || $stat['size'] > 8 * 1024 * 1024 ) { return new WP_Error( 'xml_size', 'Missing or oversized Word document.' ); }
+            $xml = $zip->getFromName( 'word/document.xml' );
+            return false !== $xml ? self::parse_docx_xml( $xml ) : new WP_Error( 'xml_missing', 'Missing Word document XML.' );
+        } finally { $zip->close(); }
+    }
+    /** Public pure-ish parser for deterministic XML regression testing. No external entities. */
+    public static function parse_docx_xml( $xml ) {
+        if ( ! class_exists( 'DOMDocument' ) || ! is_string( $xml ) || strlen( $xml ) > 8 * 1024 * 1024 || stripos( $xml, '<!DOCTYPE' ) !== false || stripos( $xml, '<!ENTITY' ) !== false ) {
+            return new WP_Error( 'docx_xml', 'Invalid Word document XML.' );
+        }
+        $doc = new DOMDocument();
+        $before = libxml_use_internal_errors( true );
+        $valid = $doc->loadXML( $xml, LIBXML_NONET );
+        libxml_clear_errors(); libxml_use_internal_errors( $before );
+        if ( ! $valid ) { return new WP_Error( 'docx_parse', 'Could not read Word document XML.' ); }
+        $xp = new DOMXPath( $doc );
+        $xp->registerNamespace( 'w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main' );
+        $tables = $xp->query( '//w:body/w:tbl' );
+        if ( ! $tables || ! $tables->length ) { return new WP_Error( 'docx_table', 'Add a Word table with field names in the first row.' ); }
+        $headers = array(); $rows = array(); $line = 0;
+        foreach ( $xp->query( './w:tr', $tables->item(0) ) as $tr ) {
+            ++$line; $cells = array();
+            foreach ( $xp->query( './w:tc', $tr ) as $tc ) {
+                $chunks = array();
+                foreach ( $xp->query( './/w:t', $tc ) as $text ) { $chunks[] = $text->textContent; }
+                $cells[] = trim( implode( ' ', $chunks ) );
+                if ( count( $cells ) > self::MAX_COLS ) { return new WP_Error( 'docx_columns', 'Too many Word table columns.' ); }
+            }
+            if ( ! $headers ) { $headers = $cells; continue; }
+            if ( ! array_filter( $cells, 'strlen' ) ) { continue; }
+            $rows[] = array( 'line' => $line, 'cells' => $cells );
+            if ( count( $rows ) > self::MAX_ROWS ) { return new WP_Error( 'docx_rows', 'Too many Word table rows.' ); }
+        }
+        return self::finalize_rows( $headers, $rows );
+    }
 
 	/** Parse RFC 4180-ish CSV, preserving quoted newlines and UTF-8. */
 	private static function parse_csv( $path ) {

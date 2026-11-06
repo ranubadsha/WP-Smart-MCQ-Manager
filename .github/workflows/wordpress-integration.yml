@@ -1,0 +1,43 @@
+name: WordPress integration smoke test
+on:
+  push:
+  pull_request:
+jobs:
+  wordpress:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: wordpress
+          MYSQL_USER: wordpress
+          MYSQL_PASSWORD: integrationpass
+          MYSQL_ROOT_PASSWORD: rootpass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mysqli, zip, dom, simplexml, mbstring
+      - name: Install WP-CLI
+        run: |
+          curl -fsSL -o wp-cli.phar https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+          php wp-cli.phar --info
+      - name: Install fresh WordPress
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/wp/wp-content/plugins/smart-mcq-manager"
+          cp -a smart-mcq-manager.php readme.txt README.md includes assets "$RUNNER_TEMP/wp/wp-content/plugins/smart-mcq-manager/"
+          php wp-cli.phar core download --path="$RUNNER_TEMP/wp" --quiet
+          php wp-cli.phar config create --path="$RUNNER_TEMP/wp" --dbname=wordpress --dbuser=wordpress --dbpass=integrationpass --dbhost=127.0.0.1 --skip-check --quiet
+          php wp-cli.phar core install --path="$RUNNER_TEMP/wp" --url=http://localhost --title='MCQ CI' --admin_user=admin --admin_password='CiTestOnlyPassword!' --admin_email=admin@example.test --skip-email --quiet
+          php wp-cli.phar plugin activate smart-mcq-manager --path="$RUNNER_TEMP/wp"
+          php wp-cli.phar eval-file tests/integration-wordpress.php --path="$RUNNER_TEMP/wp"
+          php wp-cli.phar smcq doctor --format=json --path="$RUNNER_TEMP/wp"

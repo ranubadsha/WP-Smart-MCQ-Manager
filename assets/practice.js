@@ -31,7 +31,7 @@
         }
         return result;
     }
-    var labels = { wrong: 'Retry Wrong Answers', bookmarks: 'Bookmarked Questions', weak: 'Weak Topics', mixed: 'Mixed Revision' };
+    var labels = { wrong: 'Retry Wrong Answers', bookmarks: 'Bookmarked Questions', weak: 'Weak Topics', mixed: 'Mixed Revision', daily: 'Daily Quiz', weekly: 'Weekly Quiz', custom: 'Custom Topic Practice' };
     document.querySelectorAll('.smcq-practice').forEach(function (root) {
         var notice = root.querySelector('.smcq-practice-message');
         var body = root.querySelector('.smcq-practice-body');
@@ -78,6 +78,15 @@
             count.type = 'number'; count.min = '1'; count.max = '20'; count.value = '10';
             countLabel.appendChild(count);
             form.appendChild(countLabel);
+            var subjectLabel = el('label', 'smcq-practice-count', 'Subject for Custom Practice: ');
+            var subjectInput = el('select');
+            subjectInput.appendChild(new Option('Any subject', '0'));
+            (summary.subjects || []).forEach(function (s) { subjectInput.appendChild(new Option(s.name, String(s.id))); });
+            subjectLabel.appendChild(subjectInput); form.appendChild(subjectLabel);
+            var difficultyLabel = el('label', 'smcq-practice-count', 'Difficulty: ');
+            var difficultyInput = el('select');
+            ['Any', 'easy', 'medium', 'hard'].forEach(function (v) { difficultyInput.appendChild(new Option(v === 'Any' ? 'Any difficulty' : v, v === 'Any' ? '' : v)); });
+            difficultyLabel.appendChild(difficultyInput); form.appendChild(difficultyLabel);
             var modes = el('div', 'smcq-practice-modes');
             Object.keys(labels).forEach(function (mode) {
                 modes.appendChild(button(labels[mode], async function () {
@@ -86,7 +95,7 @@
                     if (!Number.isInteger(n) || n < 1 || n > 20) { message('Choose between 1 and 20 questions.', true); return; }
                     busy = true;
                     message('Preparing ' + labels[mode] + '…');
-                    try { showSession(await api('practice/start', 'POST', { mode: mode, count: n })); }
+                    try { showSession(await api('practice/start', 'POST', { mode: mode, count: n, subject: mode === 'custom' ? Number(subjectInput.value) : 0, difficulty: mode === 'custom' ? difficultyInput.value : '' })); }
                     catch (error) { message(error.message, true); }
                     finally { busy = false; }
                 }));

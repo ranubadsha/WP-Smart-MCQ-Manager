@@ -10,8 +10,10 @@ class WP_Error {
 function is_wp_error( $obj ) { return $obj instanceof WP_Error; }
 function __( $text, $domain = '' ) { return $text; }
 function sanitize_text_field( $text ) { return trim( strip_tags( (string) $text ) ); }
+function sanitize_textarea_field( $text ) { return trim( strip_tags( (string) $text ) ); }
 function wp_kses_post( $html ) { return (string) $html; }
 function wp_http_validate_url( $url ) { return preg_match( '~^https?://[a-z0-9.-]+/~i', $url ) ? $url : false; }
+require dirname( __DIR__ ) . '/includes/class-smcq-question-types.php';
 require dirname( __DIR__ ) . '/includes/class-smcq-importer.php';
 function call_importer( $method, array $args ) {
 	$ref = new ReflectionMethod( 'SMCQ_Importer', $method );
@@ -87,3 +89,15 @@ file_put_contents( $json_bad, '{"questions":[{"question": {"object": "invalid"}}
 must( is_wp_error( call_importer( 'parse_json', array( $json_bad ) ) ), 'Nested JSON should be rejected.' );
 unlink( $json_bad );
 echo "Structured JSON tests passed.\n";
+
+// New question types are validated and imported without changing legacy columns.
+$multi = call_importer( 'map_row', array( array( 'Pick two', 'Alpha','Beta','Gamma','Delta','A,C','multiple' ),
+    array( 'question'=>0,'option_a'=>1,'option_b'=>2,'option_c'=>3,'option_d'=>4,'correct'=>5,'question_type'=>6 ) ) );
+$checked = call_importer( 'validate_row', array( $multi ) );
+must( ! is_wp_error( $checked ) && 'A,C' === $checked['correct'], 'Multiple-answer import should validate' );
+$tf = $multi; $tf['question_type'] = 'true_false'; $tf['correct'] = 'A';
+$tf['option_c'] = ''; $tf['option_d'] = '';
+must( ! is_wp_error( call_importer( 'validate_row', array( $tf ) ) ), 'True/False needs only two options' );
+$bad = $multi; $bad['correct'] = 'A,Z';
+must( is_wp_error( call_importer( 'validate_row', array( $bad ) ) ), 'Invalid multiple answer should be rejected' );
+echo "Step 14 multiple and true/false importer validation passed.\n";

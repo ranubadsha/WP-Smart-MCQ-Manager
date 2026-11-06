@@ -48,3 +48,6 @@ jobs:
 
       - name: Step 13 extended question format tests
         run: php tests/test-question-types-cli.php
+
+      - name: Editorial, AI response and daily practice regression tests
+        run: php tests/test-editorial-ai-cli.php

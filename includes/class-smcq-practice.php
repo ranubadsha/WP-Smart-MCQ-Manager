@@ -19,6 +19,9 @@ final class SMCQ_Practice {
 		add_action( 'plugins_loaded', array( __CLASS__, 'maybe_install' ) );
 		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
 		add_shortcode( 'smcq_practice', array( __CLASS__, 'shortcode' ) );
+        add_shortcode( 'smcq_daily_quiz', array( __CLASS__, 'shortcode' ) );
+        add_shortcode( 'smcq_weekly_quiz', array( __CLASS__, 'shortcode' ) );
+        add_shortcode( 'smcq_custom_practice', array( __CLASS__, 'shortcode' ) );
 		add_action( 'add_meta_boxes_smcq_question', array( __CLASS__, 'practice_box' ) );
 		add_action( 'save_post_smcq_question', array( __CLASS__, 'save_question_setting' ), 20, 2 );
 		add_filter( 'bulk_actions-edit-smcq_question', array( __CLASS__, 'bulk_actions' ) );
@@ -242,6 +245,37 @@ final class SMCQ_Practice {
 		return self::combine_pool( $wrong, $book, $weak, $mode, $count );
 	}
 
+    /** Stable UTC daily selection from explicitly released practice questions only. */
+    public static function daily_select( $ids, $day, $count ) {
+        $ids = array_values( array_unique( array_filter( array_map( 'absint', (array) $ids ) ) ) );
+        usort( $ids, static function ( $a, $b ) use ( $day ) {
+            return strcmp( hash( 'sha256', $day . ':' . $a ), hash( 'sha256', $day . ':' . $b ) );
+        } );
+        return array_slice( $ids, 0, max( 1, min( self::MAX_QUESTIONS, (int) $count ) ) );
+    }
+    private static function daily_pool( $count ) {
+        $ids = get_posts( array( 'post_type' => 'smcq_question', 'post_status' => 'publish', 'fields' => 'ids',
+            'numberposts' => self::MAX_POOL, 'meta_query' => array( array( 'key' => '_smcq_practice_enabled', 'value' => '1' ) ) ) );
+        return self::daily_select( array_filter( array_map( 'intval', $ids ), array( __CLASS__, 'eligible' ) ), gmdate( 'Y-m-d' ), $count );
+    }
+    private static function weekly_pool( $count ) {
+        $ids = get_posts( array( 'post_type' => 'smcq_question', 'post_status' => 'publish', 'fields' => 'ids',
+            'numberposts' => self::MAX_POOL, 'meta_query' => array( array( 'key' => '_smcq_practice_enabled', 'value' => '1' ) ) ) );
+        return self::daily_select( array_filter( array_map( 'intval', $ids ), array( __CLASS__, 'eligible' ) ), gmdate( 'o-\WW' ), $count );
+    }
+    private static function custom_pool( $request, $count ) {
+        $subject = absint( $request->get_param( 'subject' ) );
+        $difficulty = (string) $request->get_param( 'difficulty' );
+        if ( $difficulty && ! in_array( $difficulty, array( 'easy', 'medium', 'hard' ), true ) ) { return array(); }
+        if ( $subject && ! term_exists( $subject, 'smcq_subject' ) ) { return array(); }
+        $args = array( 'post_type' => 'smcq_question', 'post_status' => 'publish', 'fields' => 'ids', 'orderby' => 'rand',
+            'numberposts' => self::MAX_POOL, 'meta_query' => array( array( 'key' => '_smcq_practice_enabled', 'value' => '1' ) ) );
+        if ( $subject ) { $args['tax_query'] = array( array( 'taxonomy' => 'smcq_subject', 'field' => 'term_id', 'terms' => array( $subject ) ) ); }
+        if ( $difficulty ) { $args['meta_query'][] = array( 'key' => '_smcq_difficulty', 'value' => $difficulty ); }
+        $ids = get_posts( $args );
+        return array_slice( array_values( array_filter( array_map( 'intval', $ids ), array( __CLASS__, 'eligible' ) ) ), 0, $count );
+    }
+
 	private static function snapshot( $ids ) {
 		$questions = array();
 		foreach ( $ids as $id ) {
@@ -315,20 +349,29 @@ final class SMCQ_Practice {
 			if ( ! is_array( $grade ) ) { continue; }
 			$trend[] = array( 'mode' => $row['mode'], 'date' => $row['completed_at'], 'accuracy' => $grade['accuracy'], 'correct' => $grade['correct'], 'total' => $grade['totalQuestions'] );
 		}
-		return rest_ensure_response( array( 'bookmarks' => count( $bookmarks ), 'bookmarkIds' => $bookmarks, 'wrong' => count( $history['wrongIds'] ), 'weakTopics' => $history['weakTopics'], 'trend' => array_reverse( $trend ), 'sampleLimit' => self::MAX_HISTORY ) );
+		return rest_ensure_response( array( 'bookmarks' => count( $bookmarks ), 'bookmarkIds' => $bookmarks, 'wrong' => count( $history['wrongIds'] ), 'weakTopics' => $history['weakTopics'], 'trend' => array_reverse( $trend ), 'sampleLimit' => self::MAX_HISTORY, 'subjects' => self::public_subjects() ) );
 	}
+
+    public static function public_subjects() {
+        $terms = get_terms( array( 'taxonomy' => 'smcq_subject', 'hide_empty' => true, 'number' => 100 ) );
+        if ( is_wp_error( $terms ) || ! is_array( $terms ) ) { return array(); }
+        return array_map( static function ( $term ) { return array( 'id' => (int) $term->term_id, 'name' => (string) $term->name ); }, $terms );
+    }
 
 	public static function start( $request ) {
 		global $wpdb;
 		$user = get_current_user_id();
 		$mode = $request->get_param( 'mode' );
-		if ( ! in_array( $mode, array( 'wrong', 'bookmarks', 'weak', 'mixed' ), true ) ) { return self::error( 'smcq_practice_mode', __( 'Select a valid practice mode.', 'smart-mcq-manager' ) ); }
+		if ( ! in_array( $mode, array( 'wrong', 'bookmarks', 'weak', 'mixed', 'daily', 'weekly', 'custom' ), true ) ) { return self::error( 'smcq_practice_mode', __( 'Select a valid practice mode.', 'smart-mcq-manager' ) ); }
 		$count = $request->get_param( 'count' );
 		if ( ! is_numeric( $count ) || (int) $count < 1 || (int) $count > self::MAX_QUESTIONS ) { return self::error( 'smcq_practice_count', __( 'Choose between 1 and 20 questions.', 'smart-mcq-manager' ) ); }
 		$current = self::active( $user, $mode );
 		if ( $current ) { return rest_ensure_response( self::view( $current ) ); }
 		$history = self::analyze_history( self::history_rows( $user ) );
-		$ids = self::pool( $mode, (int) $count, $history, self::bookmarks( $user ) );
+		if ( 'daily' === $mode ) { $ids = self::daily_pool( (int) $count ); }
+        elseif ( 'weekly' === $mode ) { $ids = self::weekly_pool( (int) $count ); }
+        elseif ( 'custom' === $mode ) { $ids = self::custom_pool( $request, (int) $count ); }
+        else { $ids = self::pool( $mode, (int) $count, $history, self::bookmarks( $user ) ); }
 		if ( ! $ids ) { return self::error( 'smcq_empty_practice', __( 'No released practice questions match this mode. Ask your instructor to enable practice on eligible questions.', 'smart-mcq-manager' ), 404 ); }
 		$snapshot = self::snapshot( $ids );
 		if ( ! $snapshot['questions'] ) { return self::error( 'smcq_empty_practice', __( 'No valid questions are available for practice.', 'smart-mcq-manager' ), 404 ); }
@@ -347,7 +390,7 @@ final class SMCQ_Practice {
 		$user = get_current_user_id();
 		$id = absint( $request->get_param( 'id' ) );
 		$mode = (string) $request->get_param( 'mode' );
-		$row = $id ? self::load( $id, $user ) : ( in_array( $mode, array( 'wrong', 'bookmarks', 'weak', 'mixed' ), true ) ? self::active( $user, $mode ) : null );
+		$row = $id ? self::load( $id, $user ) : ( in_array( $mode, array( 'wrong', 'bookmarks', 'weak', 'mixed', 'daily', 'weekly', 'custom' ), true ) ? self::active( $user, $mode ) : null );
 		if ( ! $row ) { return self::error( 'smcq_practice_missing', __( 'Practice session not found.', 'smart-mcq-manager' ), 404 ); }
 		return rest_ensure_response( self::view( $row ) );
 	}

@@ -1,64 +1,29 @@
-# Smart MCQ Manager — v1.3.0 (Step 13 and partial follow-on work)
+# Smart MCQ Manager v1.4.0 — Advanced workflow upgrade
 
-This is a **development release**, not a declaration that Steps 13–17 or the original full feature specification are complete. It upgrades v1.2.0 without resetting questions, exams, saved attempts, subscriptions or reports.
+**Status: development / pre-production.** Upgrades v1.3.0, preserving existing question, exam, attempt, report, practice, and WooCommerce records. **Do not launch high-stakes or paid exams until staging, checkout, load and security tests pass.**
 
-## Step 13: additional question formats (implemented)
+## Added in v1.4.0
 
-Seven editor presentation/answer types are now available in **Smart MCQ → Questions → Add New**:
+### Question bank and editorial management
+- Separate **MCQ Question Author** and **MCQ Question Reviewer** roles with custom post-type capabilities. Authors can submit questions for review; authorized reviewers can publish. Existing administrators and WordPress editors receive the new question capabilities. Question author is not permitted to publish. Test role migrations in staging before deploying.
+- **Question Version History** box stores 25 recent answer-and-metadata snapshots, with reviewer-controlled restore, separate from WordPress title revisions. Restoring a version creates a checkpoint. Existing in-progress and submitted attempts retain their original frozen question snapshots.
+- Private **Smart MCQ → Duplicate Review** screen groups normalized question titles from the latest 1,000 questions. No automatic deletions; it is a human review aid, not semantic deduplication.
+- **DOCX table import:** Word files containing a first table with a column header row and up to 500 question rows can now be previewed, mapped and imported. Requires PHP ZIP + DOM. Embedded images are **not** extracted. Complex document formatting and non-table questions are not supported. This is an optional source format, not an AI document parser.
+- **Multiple-answer, True/False, Passage, Math, Single** import columns: `question_type` and `passage`, with `correct` accepting `A,C` for multiple-correct. Four options are still required for all types except True/False (A/B). Image/audio imports remain manual with WordPress Media Library IDs.
+- Existing CSV, XLSX, JSON imports, draft/publish import controls, duplicate checks and 40-row commit batches continue to work.
 
-| Question type | Options and grading | Extra field |
-| --- | --- | --- |
-| Single correct answer | Four options, one correct (legacy-compatible default) | — |
-| Multiple correct answers | Four options; select 2–4 correct; exact-set matching only | Answer checkboxes |
-| True/False | A/B only; one correct | Put True / False in A and B |
-| Passage-based | Four options, one correct | Reading passage text |
-| Image-based | Four options, one correct | WordPress image attachment ID |
-| Audio-based | Four options, one correct | WordPress audio attachment ID |
-| Mathematics / formula | Four options, one correct | Unicode/plain-text math only |
+### Exams, learning, monitoring
+- **Daily and Weekly Quiz** modes alongside existing practice and wrong-answer revision. Deterministic selections are taken only from practice-enabled published questions, not from unreleased exams.
+- **Custom Practice**: students can select subject, difficulty and question count; a server-side eligibility check filters every question before sharing it. Sessions are stored separately from official exams. These are *practice sessions*, not administrator-certified exams.
+- In-app published **Upcoming Exams** schedule shortcode and admin-only **Live Monitor** attempt-count report. The monitor is a manually refreshed aggregate; it does not prove cheating or finalize overdue submissions.
+- **Student Achievements** shortcode computes five progress badges from the user's 500 most recent submitted attempts, without exposing other users' data.
 
-The exam player and practice interface support these types, including checkbox answer selection for multiple-answer MCQs and contextual media. Results, negative marking, answer reviews, and subject/topic analytics have been adjusted for multiple-answer responses.
+### Optional AI-assisted drafting
+- **Smart MCQ → AI Drafts** creates up to five new, **unpublished** single-answer MCQ draft questions via the OpenAI Responses API. Opt-in only: define `SMCQ_OPENAI_API_KEY` in `wp-config.php`. Optionally set `SMCQ_OPENAI_MODEL`. No API key is saved in WordPress database or included in the ZIP; only admin-entered topic/language/count are sent to the provider. Costs depend on your API account and model. AI output is untrusted, validated, saved only as drafts, and MUST be checked by a human before publication. AI calls were not exercised in this offline build.
 
-**Important limitations:** Mathematics content is Unicode/plain text, not rendered LaTeX; question media must already exist in the WordPress Media Library and media files may be publicly accessible. Multiple-correct questions use **all-or-nothing grading**, not partial credit. Dedicated matching questions, interactive equation editors, and a shared multi-question passage component are not yet included.
-
-## Step 14: selected question-management improvements (partially implemented)
-
-- **Structured JSON import**: The Bulk Import page accepts `.json` using the same preview, mapping, duplicate checks and validation as CSV/XLSX. Use a top-level array of objects or `{ "questions": [ ... ] }`, with keys `question`, `option_a`, `option_b`, `option_c`, `option_d`, `correct`, and optional fields matching the CSV template. Imported questions are **single-answer**; multi-answer JSON import is not yet supported.
-- **Student question issue reports**: After a submitted examination, a student may report a question from the detailed review screen. The server verifies the attempt is submitted, belongs to that student, and contains the question. Reports are private administrator-only WordPress records under **Smart MCQ → Question Issue Reports**. Duplicates and daily submissions are rate-limited; reports are included in WordPress privacy export/erasure integrations.
-- **Basic post revisions** for question titles via WordPress revisions support. Full question-meta revision restoration and an editorial approval workflow are **not implemented**.
-
-## Step 16: selected learning/presentation extras (partially implemented)
-
-- **Gutenberg dynamic blocks** for Exam, Student Dashboard, Practice, and History. These wrap existing, access-controlled shortcodes and do not expose correct answers through the editor.
-- **Printable completion certificate** shortcode, restricted to the logged-in owner of a *passed*, submitted attempt: `[smcq_certificate attempt_id="123"]`. Browser Print → Save as PDF; no independently verifiable certificate issuing or digital signatures.
-
-## Still planned — not complete
-
-- **Step 13 remaining:** full MathJax/KaTeX LaTeX, matching questions, arbitrary option counts, reusable passage groups, partial credit.
-- **Step 14 remaining:** Word DOCX import, multi-answer importing, approval/reviewer workflow, rich question-meta revisions, interactive duplicate review.
-- **Step 15:** Custom student exam builder, daily/weekly quiz scheduler, comprehensive live exam monitoring, notifications.
-- **Step 16 remaining:** AI-assisted question drafting and explanations, dedicated role/capability system, rich certificates, badges and rewards.
-- **Step 17:** Live WordPress integration, real payment tests, concurrent load testing, external security assessment, and production launch sign-off.
-
-## Upgrade and test
-
-1. Back up your WordPress database and plugin directory; upgrade a **staging copy** before production.
-2. Upload the plugin ZIP via **Plugins → Add New → Upload Plugin → Replace current with uploaded**.
-3. Create one of each question type, publish an exam using these questions, and run a **student-account** attempt, including switching tabs and finishing it.
-4. Confirm that answer keys cannot be fetched while active and the completed attempt shows the right result and explanation. Also test `[smcq_practice]` with explicitly practice-enabled questions.
-5. Upload the bundled `examples/smart-mcq-import-template.csv` or a structured JSON file and inspect the imported records.
-6. Try the issue-report button after completing an exam; confirm only administrators can read the saved reports.
-7. For Gutenberg, add a **Smart MCQ Exam** block, provide the numeric exam ID, and preview the published page.
-8. Create a certificate page with `[smcq_certificate attempt_id="123"]`; only the owning student with a passing result should be able to see it.
-
-Run standalone tests (no WordPress install needed):
-
-```bash
-find . -name '*.php' -print0 | xargs -0 -n1 php -l
-for f in tests/test-*-cli.php; do php "$f"; done
-for f in assets/*.js; do node --check "$f"; done
-```
-
-The automated tests are **PHP CLI helper and parser tests**, not a substitute for end-to-end WordPress deployment tests. XLSX depends on PHP ZIP and SimpleXML extensions; the local CLI environment used for packaging lacks them. Real WooCommerce checkout remains untested here.
+### QA and production readiness
+- New PHP CLI tests for editorial duplicates, roles definitions, AI-output validation, daily question selection, custom-import validation, badges and live monitor aggregates.
+- GitHub Actions **WordPress + MySQL integration smoke-test workflow** and a `tests/integration-wordpress.php` WP-CLI script for activation, schema/roles, shortcodes, and question eligibility. **This workflow was added but has not been run in the local environment.**
 
 ## Shortcodes
 
@@ -67,9 +32,43 @@ The automated tests are **PHP CLI helper and parser tests**, not a substitute fo
 [smcq_history]
 [smcq_dashboard]
 [smcq_my_report]
-[smcq_practice]
+[smcq_practice]              # Includes Daily, Weekly, Custom and revision modes
+[smcq_daily_quiz]            # Uses the practice UI
+[smcq_weekly_quiz]           # Uses the practice UI
+[smcq_custom_practice]       # Uses the practice UI
 [smcq_leaderboard id="123"]
 [smcq_certificate attempt_id="456"]
+[smcq_upcoming_exams]
+[smcq_badges]
 ```
 
-License: GPL-2.0-or-later.
+## Upgrade procedure
+
+1. Back up your database, plugin files, and any custom integrations. Upgrade a staging copy before production.
+2. Upload the ZIP through **Plugins → Add New → Upload Plugin → Replace current with uploaded**.
+3. Verify questions are visible to an administrator, new author/reviewer roles work, and reviewers can publish without permitting authors to publish.
+4. Check **Smart MCQ → Duplicate Review** and a test question's Version History. Restore a test version, not live exam content.
+5. Upload CSV, DOCX and XLSX examples on a host with ZIP/DOM/XML; validate your Bangla text, options, answer keys and source metadata. Imported questions default to draft.
+6. Create a practice-enabled test question, run Daily, Weekly and Custom modes from a student account. Confirm unreleased exam questions are not accessible.
+7. Test `wp smcq doctor`, exam start/autosave/timeout, grading, reports, refunds, private record export/erase, and tablet/mobile rendering.
+8. For AI, configure your own provider key only in the **server configuration**; test on a staging website and review every generated answer.
+9. Run the new GitHub Actions integration workflow and manually verify results. Run high-concurrency database and payment tests before opening a public exam.
+
+## Known limitations / unverified requirements
+
+- **Not yet fully implemented:** interactive matching questions, shared editable passage groups, arbitrary answer counts, per-option partial credit, bundled/offline LaTeX rendering, multi-page PDF certificates and signed public certificate validation, email notification subscriptions and automated proctoring, advanced teacher-classroom assignments, and fully localized Bangla admin screens.
+- **Not verified here:** real WordPress/WooCommerce activation and payment, GitHub Actions result, live AI Responses API, DOCX/XLSX runtime parsing in PHP without ZIP/DOM/XML, external security review, and real high-concurrency load tests.
+- User attempts use the established server-side timed exam system. Practice selection uses no confidential exam questions, because only explicitly practice-enabled, published questions qualify.
+- Existing exams and questions are not rewritten in a new database schema. WordPress native `pending` status supports reviewer approval on the updated custom question post type.
+- CI smoke tests are a starting point, **not** a security or production certification.
+
+## Standalone tests
+
+```bash
+find . -name '*.php' -print0 | xargs -0 -n1 php -l
+for f in tests/test-*-cli.php; do php "$f"; done
+find assets -name '*.js' -print0 | xargs -0 -n1 node --check
+```
+
+## License
+GPL-2.0-or-later.
