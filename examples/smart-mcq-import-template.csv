@@ -1,0 +1,4 @@
+<PARSED TEXT FOR SHEET: 1 / 1 TABS
+TAB NAME: examples__smart-mcq-import-template.csv>index,question,option_a,option_b,option_c,option_d,correct,explanation,subject,topic,exam_source,tags,difficulty,language,exam_year,reference,reference_url,marks,negative_marks
+0,What is the capital of Bangladesh?,Dhaka,Khulna,Rajshahi,Sylhet,A,Dhaka is the capital.,General Knowledge,Bangladesh,BCS,Geography|Bangladesh,easy,en,2025,General Knowledge Book,https://example.org/,1,0.25
+1,বাংলাদেশের রাজধানী কোনটি?,ঢাকা,চট্টগ্রাম,খুলনা,সিলেট,A,ঢাকা বাংলাদেশের রাজধানী।,সাধারণ জ্ঞান,বাংলাদেশ বিষয়াবলি,বিসিএস,বাংলাদেশ,easy,bn,2026,,,1,0.0

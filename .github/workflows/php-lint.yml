@@ -1,4 +1,4 @@
-name: PHP Syntax Check
+name: PHP Lint and Import Validation
 on:
   push:
   pull_request:
@@ -13,5 +13,8 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          extensions: zip, simplexml
       - name: Lint PHP source
         run: find . -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Importer parser and validation smoke tests
+        run: php tests/test-importer-cli.php

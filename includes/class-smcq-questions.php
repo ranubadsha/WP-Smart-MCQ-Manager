@@ -1,6 +1,6 @@
 <?php
 /**
- * Step 2: Admin question bank. Stores the original Step 1 keys unchanged.
+ * Step 2-3: Admin question bank. Stores the original Step 1 keys unchanged.
  * Future examination endpoints MUST enforce access restrictions to answer keys.
  *
  * @package SmartMCQManager
@@ -359,7 +359,7 @@ final class SMCQ_Questions {
 		$screen = get_current_screen();
 		if ( ! $screen || self::POST_TYPE !== $screen->post_type ) { return; }
 		if ( 'edit' === $screen->base ) {
-			echo '<div class="notice notice-info"><p>' . esc_html__( 'Step 2: Filter questions by subject, topic, exam source, difficulty, language and year. Incomplete questions are flagged and should not be used in exams.', 'smart-mcq-manager' ) . '</p></div>';
+			echo '<div class="notice notice-info"><p>' . esc_html__( 'Filter questions by subject, topic, exam source, difficulty, language and year. Incomplete questions are flagged and should not be used in exams.', 'smart-mcq-manager' ) . '</p></div>';
 		}
 	}
 }
