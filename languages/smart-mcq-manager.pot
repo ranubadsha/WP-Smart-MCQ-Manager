@@ -1,1 +1,1665 @@
-No readable content was found in this file for the requested mode.
+msgid ""
+msgstr ""
+"Project-Id-Version: Smart MCQ Manager 1.4.1\n"
+"Report-Msgid-Bugs-To: https://github.com/ranubadsha/WP-Smart-MCQ-Manager/issues\n"
+"POT-Creation-Date: 2026-11-07 00:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Domain: smart-mcq-manager\n"
+
+#: includes/class-smcq-importer.php:238
+msgid "%1$d / %2$d rows processed."
+msgstr ""
+
+#: includes/class-smcq-gamification.php:30
+msgid "%d completed, %d passed (latest 500 completed attempts)"
+msgstr ""
+
+#: includes/class-smcq-importer.php:204
+msgid "%d questions found. Showing the first 5 rows. The question and all four options must be filled in."
+msgstr ""
+
+#: includes/class-smcq-importer.php:95
+msgid "1. Upload questions"
+msgstr ""
+
+#: includes/class-smcq-importer.php:203
+msgid "2. Preview and map columns"
+msgstr ""
+
+#: includes/class-smcq-importer.php:237
+msgid "3. Import in batches"
+msgstr ""
+
+#: includes/class-smcq-importer.php:248
+msgid "40 rows are processed per request to help avoid server timeouts. Continue until complete; you can leave this page and resume within 30 minutes."
+msgstr ""
+
+#: includes/class-smcq-ai.php:11
+msgid "AI Draft Questions"
+msgstr ""
+
+#: includes/class-smcq-ai.php:11
+msgid "AI Drafts"
+msgstr ""
+
+#: includes/class-smcq-ai.php:16
+msgid "AI-Assisted Question Drafts"
+msgstr ""
+
+#: includes/class-smcq-commerce.php:69
+msgid "Access"
+msgstr ""
+
+#: includes/class-smcq-commerce.php:77
+msgid "Access validity in days (0 = no expiry)"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:262
+#: includes/class-smcq-reports.php:241
+msgid "Accuracy"
+msgstr ""
+
+#: includes/class-smcq-security.php:186
+#: includes/class-smcq-security.php:196
+#: includes/class-smcq-security.php:211
+msgid "Active attempt not found."
+msgstr ""
+
+#: includes/class-smcq-questions.php:36
+msgid "Add MCQ Question"
+msgstr ""
+
+#: includes/class-smcq-exams.php:34
+msgid "Add New Exam"
+msgstr ""
+
+#: includes/class-smcq-importer.php:84
+msgid "Added: %1$d; duplicates skipped: %2$d; invalid or failed: %3$d."
+msgstr ""
+
+#: includes/class-smcq-importer.php:239
+msgid "Added: %1$d; duplicates: %2$d; invalid or failed: %3$d."
+msgstr ""
+
+#: includes/class-smcq-reports.php:347
+msgid "Administrator MCQ Exam Report"
+msgstr ""
+
+#: includes/class-smcq-questions.php:324
+msgid "All %s"
+msgstr ""
+
+#: includes/class-smcq-questions.php:333
+msgid "All difficulties"
+msgstr ""
+
+#: includes/class-smcq-reports.php:181
+msgid "All examinations"
+msgstr ""
+
+#: includes/class-smcq-questions.php:334
+msgid "All languages"
+msgstr ""
+
+#: includes/class-smcq-practice.php:86
+msgid "Allow students to practice and bookmark this question"
+msgstr ""
+
+#: includes/class-smcq-practice.php:420
+msgid "Another answer was saved first. Reload your practice."
+msgstr ""
+
+#: includes/class-smcq-security.php:143
+msgid "Another session changed. Retry to continue on this device."
+msgstr ""
+
+#: includes/class-smcq-questions.php:78
+msgid "Answer Options & Explanation"
+msgstr ""
+
+#: includes/class-smcq-player.php:533
+msgid "Answer could not be saved. Please reload the exam."
+msgstr ""
+
+#: includes/class-smcq-questions.php:121
+msgid "Answer explanation"
+msgstr ""
+
+#: includes/class-smcq-player.php:127
+msgid "Answer saved."
+msgstr ""
+
+#: includes/class-smcq-reports.php:241
+msgid "Answered"
+msgstr ""
+
+#: includes/class-smcq-practice.php:486
+msgid "Answers"
+msgstr ""
+
+#: includes/class-smcq-exams.php:168
+msgid "Any"
+msgstr ""
+
+#: includes/class-smcq-exams.php:156
+msgid "Any difficulty"
+msgstr ""
+
+#: includes/class-smcq-reports.php:190
+#: includes/class-smcq-security.php:258
+msgid "Apply filters"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:262
+msgid "Attempt"
+msgstr ""
+
+#: includes/class-smcq-exams.php:107
+msgid "Attempt limit (0 = unlimited)"
+msgstr ""
+
+#: includes/class-smcq-player.php:499
+#: includes/class-smcq-player.php:544
+#: includes/class-smcq-player.php:590
+msgid "Attempt not found."
+msgstr ""
+
+#: includes/class-smcq-live-monitor.php:30
+msgid "Attempt state"
+msgstr ""
+
+#: includes/class-smcq-exams.php:149
+msgid "Automatic Question Generator"
+msgstr ""
+
+#: includes/class-smcq-reports.php:200
+msgid "Average score (%)"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:256
+msgid "Average score in recent sample:"
+msgstr ""
+
+#: includes/class-smcq-health.php:119
+msgid "Back up the database and test on staging first. This action creates missing plugin tables and indexes without deleting existing student records. Large index rebuilds may lock tables on some hosts."
+msgstr ""
+
+#: includes/class-smcq-questions.php:258
+msgid "Bangla"
+msgstr ""
+
+#: includes/class-smcq-questions.php:260
+msgid "Bangla & English"
+msgstr ""
+
+#: includes/class-smcq-importer.php:173
+msgid "Book / Reference"
+msgstr ""
+
+#: includes/class-smcq-questions.php:157
+msgid "Book / reference"
+msgstr ""
+
+#: includes/class-smcq-practice.php:481
+msgid "Bookmarked Question IDs"
+msgstr ""
+
+#: includes/class-smcq-importer.php:33
+msgid "Bulk Import"
+msgstr ""
+
+#: includes/class-smcq-importer.php:74
+msgid "Bulk Import MCQ Questions"
+msgstr ""
+
+#: includes/class-smcq-commerce.php:76
+msgid "Buying ANY listed product unlocks this exam. List the same product on several exams to sell a bundle. Use published simple/virtual products; set the price in WooCommerce."
+msgstr ""
+
+#: includes/class-smcq-player.php:244
+msgid "Cannot grade this exam attempt. Contact an administrator."
+msgstr ""
+
+#: includes/class-smcq-certificates.php:27
+msgid "Certificate of Completion"
+msgstr ""
+
+#: includes/class-smcq-health.php:114
+msgid "Check"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:245
+msgid "Choose an exam"
+msgstr ""
+
+#: includes/class-smcq-practice.php:367
+msgid "Choose between 1 and 20 questions."
+msgstr ""
+
+#: includes/class-smcq-analytics.php:256
+msgid "Completed attempts:"
+msgstr ""
+
+#: includes/class-smcq-exams.php:103
+msgid "Configure an exam blueprint. Exam time limits, attempt limits, scheduling, and question/option order are enforced for student attempts. Completed attempts are graded automatically using these frozen marking rules."
+msgstr ""
+
+#: includes/class-smcq-importer.php:229
+msgid "Confirm Mapping & Start Import"
+msgstr ""
+
+#: includes/class-smcq-importer.php:246
+msgid "Continue Next Batch"
+msgstr ""
+
+#: includes/class-smcq-questions.php:269
+#: includes/class-smcq-reports.php:241
+msgid "Correct"
+msgstr ""
+
+#: includes/class-smcq-importer.php:162
+msgid "Correct Answer (A–D or comma-separated A,C) *"
+msgstr ""
+
+#: includes/class-smcq-questions.php:109
+msgid "Correct answer"
+msgstr ""
+
+#: includes/class-smcq-questions.php:115
+msgid "Correct choices (select two or more for Multiple)"
+msgstr ""
+
+#: includes/class-smcq-player.php:484
+msgid "Could not create an attempt. Please retry."
+msgstr ""
+
+#: includes/class-smcq-importer.php:441
+msgid "Could not create this question."
+msgstr ""
+
+#: includes/class-smcq-practice.php:443
+msgid "Could not finish due to another session update."
+msgstr ""
+
+#: includes/class-smcq-reports.php:332
+msgid "Could not generate Excel report."
+msgstr ""
+
+#: includes/class-smcq-importer.php:68
+msgid "Could not read this file. Check the format, file size and server PHP extensions."
+msgstr ""
+
+#: includes/class-smcq-question-reports.php:68
+msgid "Could not save the report."
+msgstr ""
+
+#: includes/class-smcq-practice.php:384
+msgid "Could not start practice."
+msgstr ""
+
+#: includes/class-smcq-security.php:128
+msgid "Could not validate this exam session. Try again."
+msgstr ""
+
+#: includes/class-smcq-live-monitor.php:30
+msgid "Count"
+msgstr ""
+
+#: includes/class-smcq-player.php:149
+msgid "Create a WordPress page containing this shortcode. Only logged-in users may start published exams."
+msgstr ""
+
+#: includes/class-smcq-question-reports.php:61
+msgid "Daily question report limit reached."
+msgstr ""
+
+#: includes/class-smcq-health.php:119
+msgid "Database Schema Repair"
+msgstr ""
+
+#: includes/class-smcq-exams.php:122
+msgid "Dates use the WordPress site timezone (Settings → General). The schedule controls student admission, and the closing time limits each attempt."
+msgstr ""
+
+#: includes/class-smcq-analytics.php:266
+msgid "Deleted account"
+msgstr ""
+
+#: includes/class-smcq-exams.php:156
+#: includes/class-smcq-importer.php:170
+#: includes/class-smcq-questions.php:143
+#: includes/class-smcq-questions.php:270
+msgid "Difficulty"
+msgstr ""
+
+#: includes/class-smcq-importer.php:384
+msgid "Difficulty must be easy, medium or hard."
+msgstr ""
+
+#: includes/class-smcq-practice.php:100
+msgid "Disable practice availability"
+msgstr ""
+
+#: includes/class-smcq-reports.php:208
+msgid "Download CSV"
+msgstr ""
+
+#: includes/class-smcq-reports.php:208
+msgid "Download Excel"
+msgstr ""
+
+#: includes/class-smcq-reports.php:169
+msgid "Download My Exam Results"
+msgstr ""
+
+#: includes/class-smcq-importer.php:105
+msgid "Download Sample CSV Template"
+msgstr ""
+
+#: includes/class-smcq-importer.php:227
+msgid "Draft (recommended)"
+msgstr ""
+
+#: includes/class-smcq-editorial.php:100
+#: includes/class-smcq-editorial.php:106
+msgid "Duplicate Question Review"
+msgstr ""
+
+#: includes/class-smcq-editorial.php:100
+msgid "Duplicate Review"
+msgstr ""
+
+#: includes/class-smcq-exams.php:338
+msgid "Duration"
+msgstr ""
+
+#: includes/class-smcq-exams.php:105
+msgid "Duration (minutes)"
+msgstr ""
+
+#: includes/class-smcq-commerce.php:79
+msgid "Duration starts when payment is confirmed. Refunded, cancelled, pending and on-hold orders do not qualify. For genuine recurring billing, WooCommerce Subscriptions is required; only active subscriptions qualify."
+msgstr ""
+
+#: includes/class-smcq-questions.php:250
+msgid "Easy"
+msgstr ""
+
+#: includes/class-smcq-exams.php:35
+msgid "Edit Exam"
+msgstr ""
+
+#: includes/class-smcq-questions.php:37
+msgid "Edit MCQ Question"
+msgstr ""
+
+#: includes/class-smcq-practice.php:99
+msgid "Enable practice availability"
+msgstr ""
+
+#: includes/class-smcq-questions.php:259
+msgid "English"
+msgstr ""
+
+#: includes/class-smcq-question-reports.php:47
+msgid "Enter a reason and a description of 15–2,000 characters."
+msgstr ""
+
+#: includes/class-smcq-security.php:256
+msgid "Event"
+msgstr ""
+
+#: includes/class-smcq-exams.php:33
+#: includes/class-smcq-live-monitor.php:30
+#: includes/class-smcq-reports.php:181
+msgid "Exam"
+msgstr ""
+
+#: includes/class-smcq-player.php:651
+msgid "Exam Attempts"
+msgstr ""
+
+#: includes/class-smcq-live-monitor.php:29
+#: includes/class-smcq-live-monitor.php:45
+#: includes/class-smcq-player.php:652
+msgid "Exam ID"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:220
+msgid "Exam Leaderboard"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:233
+#: includes/class-smcq-analytics.php:234
+msgid "Exam Reports"
+msgstr ""
+
+#: includes/class-smcq-security.php:219
+#: includes/class-smcq-security.php:219
+msgid "Exam Security"
+msgstr ""
+
+#: includes/class-smcq-exams.php:118
+msgid "Exam Security (optional)"
+msgstr ""
+
+#: includes/class-smcq-importer.php:168
+#: includes/class-smcq-questions.php:56
+msgid "Exam Source"msgstr ""
+
+#: includes/class-smcq-questions.php:56
+msgid "Exam Sources"
+msgstr ""
+
+#: includes/class-smcq-importer.php:172
+#: includes/class-smcq-questions.php:272
+msgid "Exam Year"
+msgstr ""
+
+#: includes/class-smcq-exams.php:155
+msgid "Exam source"
+msgstr ""
+
+#: includes/class-smcq-questions.php:155
+#: includes/class-smcq-questions.php:337
+#: includes/class-smcq-questions.php:337
+msgid "Exam year"
+msgstr ""
+
+#: includes/class-smcq-importer.php:391
+msgid "Exam year must be between 1900 and 2100."
+msgstr ""
+
+#: includes/class-smcq-exams.php:50
+msgid "Examination Settings"
+msgstr ""
+
+#: includes/class-smcq-exams.php:32
+#: includes/class-smcq-exams.php:36
+msgid "Exams"
+msgstr ""
+
+#: includes/class-smcq-importer.php:165
+msgid "Explanation"
+msgstr ""
+
+#: includes/class-smcq-security.php:260
+msgid "Export CSV (max 5000 events)"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:267
+msgid "Failed"
+msgstr ""
+
+#: includes/class-smcq-live-monitor.php:29
+msgid "Filter / Refresh"
+msgstr ""
+
+#: includes/class-smcq-questions.php:394
+msgid "Filter questions by subject, topic, exam source, difficulty, language and year. Incomplete questions are flagged and should not be used in exams."
+msgstr ""
+
+#: includes/class-smcq-exams.php:137
+msgid "Find questions by title or ID"
+msgstr ""
+
+#: includes/class-smcq-player.php:595
+msgid "Finish the examination before viewing results."
+msgstr ""
+
+#: includes/class-smcq-importer.php:266
+msgid "First validation errors:"
+msgstr ""
+
+#: includes/class-smcq-exams.php:110
+msgid "Fixed deduction per wrong answer"
+msgstr ""
+
+#: includes/class-smcq-exams.php:109
+msgid "Fixed marks per correct answer"
+msgstr ""
+
+#: includes/class-smcq-commerce.php:71
+msgid "Free examination"
+msgstr ""
+
+#: includes/class-smcq-reports.php:188
+msgid "From (UTC)"
+msgstr ""
+
+#: includes/class-smcq-ai.php:27
+msgid "Generate Unpublished Drafts"
+msgstr ""
+
+#: includes/class-smcq-exams.php:300
+msgid "Generated and saved %d valid questions."
+msgstr ""
+
+#: includes/class-smcq-exams.php:150
+msgid "Generating replaces the selected list ONLY if enough valid questions are found. Keep the existing selection otherwise. Maximum 200 questions per exam."
+msgstr ""
+
+#: includes/class-smcq-player.php:656
+msgid "Grade summary"
+msgstr ""
+
+#: includes/class-smcq-questions.php:252
+msgid "Hard"
+msgstr ""
+
+#: includes/class-smcq-reports.php:202
+msgid "Highest score (%)"
+msgstr ""
+
+#: includes/class-smcq-importer.php:32
+msgid "Import MCQ Questions"
+msgstr ""
+
+#: includes/class-smcq-importer.php:80
+msgid "Import completed."
+msgstr ""
+
+#: includes/class-smcq-questions.php:289
+msgid "Incomplete"
+msgstr ""
+
+#: includes/class-smcq-practice.php:412
+msgid "Invalid answer for this question."
+msgstr ""
+
+#: includes/class-smcq-practice.php:406
+msgid "Invalid answer request."
+msgstr ""
+
+#: includes/class-smcq-security.php:202
+msgid "Invalid event type."
+msgstr ""
+
+#: includes/class-smcq-importer.php:397
+msgid "Invalid marks or negative marks."
+msgstr ""
+
+#: includes/class-smcq-importer.php:378
+msgid "Invalid options, answer combination, or passage for this question type."
+msgstr ""
+
+#: includes/class-smcq-importer.php:336
+msgid "Invalid or reused column."
+msgstr ""
+
+#: includes/class-smcq-player.php:515
+msgid "Invalid question, choice, or version."
+msgstr ""
+
+#: includes/class-smcq-importer.php:407
+msgid "Invalid reference URL."
+msgstr ""
+
+#: includes/class-smcq-reports.php:266
+msgid "Invalid report request."
+msgstr ""
+
+#: includes/class-smcq-ai.php:25
+#: includes/class-smcq-importer.php:171
+#: includes/class-smcq-questions.php:149
+#: includes/class-smcq-questions.php:271
+msgid "Language"
+msgstr ""
+
+#: includes/class-smcq-importer.php:387
+msgid "Language must be bn, en or mixed."
+msgstr ""
+
+#: includes/class-smcq-exams.php:117
+msgid "Leaderboard is disabled by default. Only logged-in users may see pseudonymous rankings after the scheduled closing time. Shortcode: [smcq_leaderboard id=\"EXAM_ID\"]"
+msgstr ""
+
+#: includes/class-smcq-live-monitor.php:10
+#: includes/class-smcq-live-monitor.php:27
+msgid "Live Examination Monitor"
+msgstr ""
+
+#: includes/class-smcq-live-monitor.php:10
+msgid "Live Monitor"
+msgstr ""
+
+#: includes/class-smcq-player.php:144
+msgid "Loading examination history…"
+msgstr ""
+
+#: includes/class-smcq-player.php:114
+#: includes/class-smcq-player.php:125
+msgid "Loading examination…"
+msgstr ""
+
+#: includes/class-smcq-practice.php:141
+msgid "Loading revision options…"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:45
+msgid "Loading your progress…"
+msgstr ""
+
+#: includes/class-smcq-player.php:108
+#: includes/class-smcq-practice.php:136
+msgid "Log in"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:53
+msgid "Log in first."
+msgstr ""
+
+#: includes/class-smcq-practice.php:136
+msgid "Log in to access personal revision practice."
+msgstr ""
+
+#: includes/class-smcq-reports.php:168
+msgid "Log in to export your examination history."
+msgstr ""
+
+#: includes/class-smcq-gamification.php:22
+msgid "Log in to see your achievements."
+msgstr ""
+
+#: includes/class-smcq-exams.php:119
+msgid "Log tab visibility changes, fullscreen exits, and session conflicts (30-day retention)"
+msgstr ""
+
+#: includes/class-smcq-reports.php:203
+msgid "Lowest score (%)"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:244
+msgid "MCQ Exam Reports"
+msgstr ""
+
+#: includes/class-smcq-reports.php:179
+msgid "MCQ Exam Reports & Exports"
+msgstr ""
+
+#: includes/class-smcq-security.php:250
+msgid "MCQ Exam Security Events"
+msgstr ""
+
+#: includes/class-smcq-questions.php:35
+msgid "MCQ Question"
+msgstr ""
+
+#: includes/class-smcq-editorial.php:28
+msgid "MCQ Question Author"
+msgstr ""
+
+#: includes/class-smcq-question-reports.php:74
+#: includes/class-smcq-question-reports.php:78
+#: includes/class-smcq-question-reports.php:90
+msgid "MCQ Question Reports"
+msgstr ""
+
+#: includes/class-smcq-editorial.php:29
+msgid "MCQ Question Reviewer"
+msgstr ""
+
+#: includes/class-smcq-editorial.php:49
+msgid "MCQ Question Version History"
+msgstr ""
+
+#: includes/class-smcq-questions.php:34
+msgid "MCQ Questions"
+msgstr ""
+
+#: includes/class-smcq-importer.php:175
+#: includes/class-smcq-questions.php:161
+msgid "Marks"
+msgstr ""
+
+#: includes/class-smcq-importer.php:211
+msgid "Match each field with a column. Optional fields may be set to — Ignore —. Duplicate columns for required fields are not allowed."
+msgstr ""
+
+#: includes/class-smcq-questions.php:169
+msgid "Math questions accept Unicode and plain-text formulas. LaTeX rendering is not included yet."
+msgstr ""
+
+#: includes/class-smcq-questions.php:251
+msgid "Medium"
+msgstr ""
+
+#: includes/class-smcq-reports.php:206
+msgid "Metrics and category analysis use up to 500 matching completed attempts; the total is before the pass/fail filter. Exports include at most 5,000 matching attempts. Date filters use UTC."
+msgstr ""
+
+#: includes/class-smcq-importer.php:362
+msgid "Missing %s."
+msgstr ""
+
+#: includes/class-smcq-importer.php:343
+msgid "Missing a required field."
+msgstr ""
+
+#: includes/class-smcq-exams.php:121
+msgid "Monitoring and tab locking are off by default. Visibility events are not proof of cheating. Do not enable single-tab locking if students rely on unsupported browsers or embedded webviews."
+msgstr ""
+
+#: includes/class-smcq-live-monitor.php:30
+msgid "Most recently started (UTC)"
+msgstr ""
+
+#: includes/class-smcq-gamification.php:29
+msgid "My Achievements"
+msgstr ""
+
+#: includes/class-smcq-player.php:144
+msgid "My Examination History"
+msgstr ""
+
+#: includes/class-smcq-reports.php:347
+msgid "My MCQ Exam Results"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:45
+msgid "My MCQ Performance"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:45
+msgid "My MCQ performance"
+msgstr ""
+
+#: includes/class-smcq-player.php:144
+msgid "My examination history"
+msgstr ""
+
+#: includes/class-smcq-reports.php:161
+msgid "My results export:"
+msgstr ""
+
+#: includes/class-smcq-practice.php:141
+msgid "My revision practice"
+msgstr ""
+
+#: includes/class-smcq-exams.php:354
+msgid "Needs questions"
+msgstr ""
+
+#: includes/class-smcq-importer.php:176
+msgid "Negative Marks"
+msgstr ""
+
+#: includes/class-smcq-questions.php:163
+msgid "Negative marks"
+msgstr ""
+
+#: includes/class-smcq-importer.php:226
+msgid "New question status"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:276
+#: includes/class-smcq-reports.php:221
+msgid "Next"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:219
+msgid "No completed exam attempts yet."
+msgstr ""
+
+#: includes/class-smcq-editorial.php:108
+msgid "No duplicates in the sampled questions."
+msgstr ""
+
+#: includes/class-smcq-certificates.php:19
+msgid "No eligible certificate was found for your account."
+msgstr ""
+
+#: includes/class-smcq-security.php:265
+msgid "No events found."
+msgstr ""
+
+#: includes/class-smcq-exams.php:370
+msgid "No matching complete questions found."
+msgstr ""
+
+#: includes/class-smcq-commerce.php:249
+msgid "No purchase option is currently available. Contact the administrator."
+msgstr ""
+
+#: includes/class-smcq-player.php:294
+#: includes/class-smcq-player.php:298
+msgid "No questions are assigned to this examination."
+msgstr ""
+
+#: includes/class-smcq-practice.php:375
+msgid "No released practice questions match this mode. Ask your instructor to enable practice on eligible questions."
+msgstr ""
+
+#: includes/class-smcq-editorial.php:53
+msgid "No saved history yet. Save the question to create a version."
+msgstr ""
+
+#: includes/class-smcq-practice.php:377
+msgid "No valid questions are available for practice."
+msgstr ""
+
+#: includes/class-smcq-exams.php:302
+msgid "Not enough eligible questions match these filters. The previously selected question set was retained."
+msgstr ""
+
+#: includes/class-smcq-health.php:114
+msgid "Notes"
+msgstr ""
+
+#: includes/class-smcq-exams.php:152
+msgid "Number of questions"
+msgstr ""
+
+#: includes/class-smcq-practice.php:87
+msgid "Off by default. Enabling makes this question available to authenticated practice users and reveals its answer AFTER they answer or finish their practice. Do not enable questions requiring embargo during a live examination."
+msgstr ""
+
+#: includes/class-smcq-player.php:114
+msgid "Online examination"
+msgstr ""
+
+#: includes/class-smcq-question-reports.php:51
+msgid "Only completed, owned attempts can be reported."
+msgstr ""
+
+#: includes/class-smcq-exams.php:120
+msgid "Only one active browser tab/device can edit an attempt (manual takeover allowed)"
+msgstr ""
+
+#: includes/class-smcq-questions.php:168
+msgid "Only published WordPress media attachments matching the question type are used. Do not upload confidential questions as publicly accessible attachments."
+msgstr ""
+
+#: includes/class-smcq-exams.php:135
+msgid "Only published, complete questions can be assigned. Search to add them individually or generate a fresh random set from the question bank."
+msgstr ""
+
+#: includes/class-smcq-reports.php:169
+msgid "Only your own submitted attempts are included. Exports are limited to the latest 5,000 matching attempts."
+msgstr ""
+
+#: includes/class-smcq-questions.php:167
+msgid "Open Media Library"
+msgstr ""
+
+#: includes/class-smcq-live-monitor.php:44
+msgid "Open now"
+msgstr ""
+
+#: includes/class-smcq-live-monitor.php:43
+msgid "Opens"
+msgstr ""
+
+#: includes/class-smcq-importer.php:158
+msgid "Option A *"
+msgstr ""
+
+#: includes/class-smcq-importer.php:159msgid "Option B *"
+msgstr ""
+
+#: includes/class-smcq-importer.php:160
+msgid "Option C *"
+msgstr ""
+
+#: includes/class-smcq-importer.php:161
+msgid "Option D *"
+msgstr ""
+
+#: includes/class-smcq-ai.php:17
+msgid "Optional feature. The question topic and requested language are sent to the configured API provider. No student records or exam answers are included. Generated questions are unpublished drafts and MUST be reviewed before use."
+msgstr ""
+
+#: includes/class-smcq-reports.php:330
+msgid "PHP ZIP extension is required for Excel downloads. Use CSV instead."
+msgstr ""
+
+#: includes/class-smcq-analytics.php:275
+msgid "Page %1$d of %2$d"
+msgstr ""
+
+#: includes/class-smcq-reports.php:221
+msgid "Page %d"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:221
+msgid "Participant"
+msgstr ""
+
+#: includes/class-smcq-exams.php:339
+msgid "Pass %"
+msgstr ""
+
+#: includes/class-smcq-reports.php:201
+msgid "Pass rate (%)"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:267
+msgid "Passed"
+msgstr ""
+
+#: includes/class-smcq-exams.php:106
+msgid "Passing percentage"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:239
+#: includes/class-smcq-exams.php:380
+#: includes/class-smcq-health.php:107
+#: includes/class-smcq-health.php:127
+#: includes/class-smcq-reports.php:174
+#: includes/class-smcq-reports.php:267
+#: includes/class-smcq-security.php:243
+#: includes/class-smcq-security.php:273
+msgid "Permission denied."
+msgstr ""
+
+#: includes/class-smcq-analytics.php:202
+msgid "Please log in to see the leaderboard."
+msgstr ""
+
+#: includes/class-smcq-player.php:108
+msgid "Please log in to start this examination."
+msgstr ""
+
+#: includes/class-smcq-certificates.php:12
+msgid "Please log in to view your certificate."
+msgstr ""
+
+#: includes/class-smcq-analytics.php:36
+msgid "Please log in to view your dashboard."
+msgstr ""
+
+#: includes/class-smcq-player.php:141
+msgid "Please log in to view your exam history."
+msgstr ""
+
+#: includes/class-smcq-reports.php:265
+msgid "Please log in."
+msgstr ""
+
+#: includes/class-smcq-practice.php:481
+#: includes/class-smcq-practice.php:483
+msgid "Practice"
+msgstr ""
+
+#: includes/class-smcq-practice.php:484
+msgid "Practice Mode"
+msgstr ""
+
+#: includes/class-smcq-practice.php:414
+msgid "Practice changed in another tab. Reload to continue."
+msgstr ""
+
+#: includes/class-smcq-practice.php:408
+#: includes/class-smcq-practice.php:432
+msgid "Practice is not active."
+msgstr ""
+
+#: includes/class-smcq-practice.php:394
+#: includes/class-smcq-practice.php:430
+msgid "Practice session not found."
+msgstr ""
+
+#: includes/class-smcq-commerce.php:61
+msgid "Premium Access & WooCommerce"
+msgstr ""
+
+#: includes/class-smcq-commerce.php:237
+msgid "Premium Examination"
+msgstr ""
+
+#: includes/class-smcq-commerce.php:234
+msgid "Premium examination access is temporarily unavailable. Please contact the site administrator."
+msgstr ""
+
+#: includes/class-smcq-commerce.php:72
+msgid "Premium — requires a qualifying WooCommerce purchase"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:274
+#: includes/class-smcq-reports.php:221
+msgid "Previous"
+msgstr ""
+
+#: includes/class-smcq-certificates.php:36
+#: includes/class-smcq-reports.php:164
+#: includes/class-smcq-reports.php:208
+#: includes/class-smcq-reports.php:348
+msgid "Print / Save as PDF"
+msgstr ""
+
+#: includes/class-smcq-health.php:111
+msgid "Private diagnostics. This screen does not inspect or export student answers, payment information, or secret keys. Changes to table indexes can take time on large sites."
+msgstr ""
+
+#: includes/class-smcq-certificates.php:15
+msgid "Provide a completed examination attempt ID in the shortcode."
+msgstr ""
+
+#: includes/class-smcq-exams.php:116
+msgid "Publish anonymous top-10 leaderboard after the scheduled end time (requires a closing date)"
+msgstr ""
+
+#: includes/class-smcq-importer.php:227
+msgid "Published (admin-only question post)"
+msgstr ""
+
+#: includes/class-smcq-commerce.php:237
+msgid "Purchase an exam pass or package, then return here while logged in."
+msgstr ""
+
+#: includes/class-smcq-commerce.php:74
+msgid "Qualifying WooCommerce product IDs (comma-separated)"
+msgstr ""
+
+#: includes/class-smcq-question-reports.php:105
+msgid "Question"
+msgstr ""
+
+#: includes/class-smcq-importer.php:157
+msgid "Question *"
+msgstr ""
+
+#: includes/class-smcq-questions.php:79
+msgid "Question Details"
+msgstr ""
+
+#: includes/class-smcq-question-reports.php:91
+#: includes/class-smcq-questions.php:267
+msgid "Question ID"
+msgstr ""
+
+#: includes/class-smcq-exams.php:145
+msgid "Question IDs (comma-separated; works without JavaScript)"
+msgstr ""
+
+#: includes/class-smcq-question-reports.php:16
+msgid "Question Issue Report"
+msgstr ""
+
+#: includes/class-smcq-question-reports.php:16
+msgid "Question Issue Reports"
+msgstr ""
+
+#: includes/class-smcq-exams.php:51
+msgid "Question Selection & Generator"
+msgstr ""
+
+#: includes/class-smcq-questions.php:57
+msgid "Question Tag"
+msgstr ""
+
+#: includes/class-smcq-questions.php:57
+msgid "Question Tags"
+msgstr ""
+
+#: includes/class-smcq-importer.php:99
+msgid "Question file (.csv, .xlsx, .docx or .json)"
+msgstr ""
+
+#: includes/class-smcq-importer.php:365
+msgid "Question or option text is too long."
+msgstr ""
+
+#: includes/class-smcq-questions.php:93
+msgid "Question type"
+msgstr ""
+
+#: includes/class-smcq-importer.php:163
+msgid "Question type (single/multiple/true_false/passage/math)"
+msgstr ""
+
+#: includes/class-smcq-exams.php:337
+#: includes/class-smcq-reports.php:241
+msgid "Questions"
+msgstr ""
+
+#: includes/class-smcq-ai.php:26
+msgid "Questions (maximum 5)"
+msgstr ""
+
+#: includes/class-smcq-exams.php:159
+msgid "Random generation draws from at most the latest 2,000 matching published questions; older questions outside this pool are not sampled. Large question banks will get a more scalable selector in a later version."
+msgstr ""
+
+#: includes/class-smcq-analytics.php:221
+msgid "Rank"
+msgstr ""
+
+#: includes/class-smcq-questions.php:166
+msgid "Reading passage (passage questions)"
+msgstr ""
+
+#: includes/class-smcq-importer.php:164
+msgid "Reading passage text"
+msgstr ""
+
+#: includes/class-smcq-exams.php:340
+#: includes/class-smcq-exams.php:354
+#: includes/class-smcq-questions.php:268
+#: includes/class-smcq-questions.php:289
+msgid "Ready"
+msgstr ""
+
+#: includes/class-smcq-importer.php:174
+#: includes/class-smcq-questions.php:159
+msgid "Reference URL"
+msgstr ""
+
+#: includes/class-smcq-certificates.php:33
+msgid "Reference: %s"
+msgstr ""
+
+#: includes/class-smcq-live-monitor.php:28
+msgid "Refresh to update counts. Active attempts may include expired attempts pending lazy finalization; these are not certified final results."
+msgstr ""
+
+#: includes/class-smcq-security.php:116
+msgid "Reload this exam page to establish a session."
+msgstr ""
+
+#: includes/class-smcq-exams.php:142
+msgid "Remove"
+msgstr ""
+
+#: includes/class-smcq-health.php:122
+msgid "Repair plugin schema"
+msgstr ""
+
+#: includes/class-smcq-question-reports.php:92
+msgid "Report"
+msgstr ""
+
+#: includes/class-smcq-editorial.php:60
+msgid "Restore"
+msgstr ""
+
+#: includes/class-smcq-editorial.php:60
+msgid "Restore this version? This will replace the current question details."
+msgstr ""
+
+#: includes/class-smcq-analytics.php:262
+#: includes/class-smcq-practice.php:487
+#: includes/class-smcq-reports.php:185
+msgid "Result"
+msgstr ""
+
+#: includes/class-smcq-editorial.php:116
+msgid "Review Status"
+msgstr ""
+
+#: includes/class-smcq-editorial.php:107
+msgid "Review potentially identical questions. Nothing is deleted automatically. The latest 1,000 questions are checked; use imports to avoid exact duplicates."
+msgstr ""
+
+#: includes/class-smcq-importer.php:299
+#: includes/class-smcq-importer.php:312
+msgid "Row %1$d: %2$s"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:256
+msgid "Sample size:"
+msgstr ""
+
+#: includes/class-smcq-reports.php:199
+msgid "Sampled attempts"
+msgstr ""
+
+#: includes/class-smcq-exams.php:158
+msgid "Save Exam & Generate Questions"
+msgstr ""
+
+#: includes/class-smcq-exams.php:146
+msgid "Save Exam & Selected Questions"
+msgstr ""
+
+#: includes/class-smcq-player.php:126
+msgid "Saving answer…"
+msgstr ""
+
+#: includes/class-smcq-exams.php:112
+msgid "Scheduled end (optional)"
+msgstr ""
+
+#: includes/class-smcq-exams.php:111
+msgid "Scheduled start (optional)"
+msgstr ""
+
+#: includes/class-smcq-health.php:112
+msgid "Schema repair attempted; check the diagnostics below for any remaining errors."
+msgstr ""
+
+#: includes/class-smcq-analytics.php:262
+msgid "Score"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:221
+msgid "Score (%)"
+msgstr ""
+
+#: includes/class-smcq-certificates.php:32
+msgid "Score: %1$s / %2$s"
+msgstr ""
+
+#: includes/class-smcq-exams.php:108
+msgid "Scoring policy"
+msgstr ""
+
+#: includes/class-smcq-exams.php:371
+msgid "Search failed. Please retry."
+msgstr ""
+
+#: includes/class-smcq-importer.php:69
+msgid "Select a different column for each required field, and choose every required field."
+msgstr ""
+
+#: includes/class-smcq-practice.php:365
+msgid "Select a valid practice mode."
+msgstr ""
+
+#: includes/class-smcq-questions.php:110
+msgid "Select an answer"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:248
+msgid "Select an exam to see administrator-only student results."
+msgstr ""
+
+#: includes/class-smcq-blocks.php:28
+msgid "Select an examination ID in the block settings."
+msgstr ""
+
+#: includes/class-smcq-analytics.php:245
+msgid "Select examination"
+msgstr ""
+
+#: includes/class-smcq-exams.php:139
+msgid "Selected questions"
+msgstr ""
+
+#: includes/class-smcq-ai.php:18
+msgid "Set SMCQ_OPENAI_API_KEY in wp-config.php to enable drafts. API usage may incur charges."
+msgstr ""
+
+#: includes/class-smcq-exams.php:115
+msgid "Shuffle answer order for each future attempt"
+msgstr ""
+
+#: includes/class-smcq-exams.php:114
+msgid "Shuffle question order for each future attempt"
+msgstr ""
+
+#: includes/class-smcq-questions.php:38
+msgid "Smart MCQ"
+msgstr ""
+
+#: includes/class-smcq-player.php:629
+#: includes/class-smcq-player.php:634
+msgid "Smart MCQ Attempts"
+msgstr ""
+
+#: includes/class-smcq-practice.php:141
+msgid "Smart MCQ Practice"
+msgstr ""
+
+#: includes/class-smcq-practice.php:462
+#: includes/class-smcq-practice.php:467
+msgid "Smart MCQ Practice and Bookmarks"
+msgstr ""
+
+#: includes/class-smcq-security.php:288
+#: includes/class-smcq-security.php:293
+msgid "Smart MCQ Security Events"
+msgstr ""
+
+#: includes/class-smcq-health.php:110
+msgid "Smart MCQ — System Status"
+msgstr ""
+
+#: includes/class-smcq-commerce.php:107
+msgid "Smart MCQ: WooCommerce is inactive. Free exams still work; premium exam access requires WooCommerce."
+msgstr ""
+
+#: includes/class-smcq-exams.php:309
+msgid "Some selected IDs were excluded because they are missing, drafts, or incomplete."
+msgstr ""
+
+#: includes/class-smcq-importer.php:205
+msgid "Source row"
+msgstr ""
+
+#: includes/class-smcq-player.php:653
+msgid "Start (UTC)"
+msgstr ""
+
+#: includes/class-smcq-exams.php:137
+msgid "Start typing a question..."
+msgstr ""
+
+#: includes/class-smcq-practice.php:485
+msgid "Started UTC"
+msgstr ""
+
+#: includes/class-smcq-health.php:114
+#: includes/class-smcq-player.php:654
+msgid "Status"
+msgstr ""
+#: includes/class-smcq-importer.php:259
+msgid "Stop Future Batches (previously added questions remain)"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:262
+msgid "Student"
+msgstr ""
+
+#: includes/class-smcq-player.php:148
+msgid "Student Exam Page"
+msgstr ""
+
+#: includes/class-smcq-reports.php:184
+msgid "Student ID (optional)"
+msgstr ""
+
+#: includes/class-smcq-practice.php:84
+msgid "Student Practice Availability"
+msgstr ""
+
+#: includes/class-smcq-exams.php:153
+#: includes/class-smcq-importer.php:166
+#: includes/class-smcq-questions.php:54
+msgid "Subject"
+msgstr ""
+
+#: includes/class-smcq-reports.php:241
+msgid "Subject / Topic"
+msgstr ""
+
+#: includes/class-smcq-reports.php:239
+msgid "Subject performance (sample)"
+msgstr ""
+
+#: includes/class-smcq-questions.php:54
+msgid "Subjects"
+msgstr ""
+
+#: includes/class-smcq-player.php:129
+msgid "Submit your examination? You will not be able to edit your answers."
+msgstr ""
+
+#: includes/class-smcq-reports.php:198
+msgid "Submitted (before grade filter)"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:262
+msgid "Submitted UTC"
+msgstr ""
+
+#: includes/class-smcq-player.php:655
+msgid "Submitted answers"
+msgstr ""
+
+#: includes/class-smcq-health.php:103
+#: includes/class-smcq-health.php:103
+msgid "System Status"
+msgstr ""
+
+#: includes/class-smcq-importer.php:169
+msgid "Tags (separate with |)"
+msgstr ""
+
+#: includes/class-smcq-ai.php:20
+msgid "The API request or response validation failed. No unverified answer key was published."
+msgstr ""
+
+#: includes/class-smcq-player.php:557
+msgid "The attempt has not been submitted."
+msgstr ""
+
+#: includes/class-smcq-player.php:306
+msgid "The exam contains an unavailable or incomplete question. Contact an administrator."
+msgstr ""
+
+#: includes/class-smcq-player.php:460
+msgid "The exam has closed."
+msgstr ""
+
+#: includes/class-smcq-exams.php:275
+msgid "The exam schedule is invalid (end must be later than start). Existing schedule was kept."
+msgstr ""
+
+#: includes/class-smcq-analytics.php:207
+msgid "The leaderboard is disabled for this examination."
+msgstr ""
+
+#: includes/class-smcq-analytics.php:204
+msgid "The leaderboard is not available for this exam."
+msgstr ""
+
+#: includes/class-smcq-analytics.php:211
+msgid "The leaderboard will be published after this scheduled exam closes."
+msgstr ""
+
+#: includes/class-smcq-practice.php:435
+msgid "The practice snapshot is not valid."
+msgstr ""
+
+#: includes/class-smcq-importer.php:70
+msgid "The preview expired. Please upload the file again."
+msgstr ""
+
+#: includes/class-smcq-player.php:128
+msgid "The request failed. Check your connection and try again."
+msgstr ""
+
+#: includes/class-smcq-player.php:518
+msgid "This attempt changed in another tab. Reload the exam before continuing."
+msgstr ""
+
+#: includes/class-smcq-security.php:138
+msgid "This attempt is active in another tab or device. Choose Continue here to take over."
+msgstr ""
+
+#: includes/class-smcq-player.php:504
+msgid "This attempt is already finished."
+msgstr ""
+
+#: includes/class-smcq-player.php:133
+msgid "This attempt was updated elsewhere. Reload to avoid overwriting answers."
+msgstr ""
+
+#: includes/class-smcq-certificates.php:28
+msgid "This certificate recognizes that"
+msgstr ""
+
+#: includes/class-smcq-player.php:210
+msgid "This exam has closed."
+msgstr ""
+
+#: includes/class-smcq-player.php:207
+msgid "This exam has not opened yet."
+msgstr ""
+
+#: includes/class-smcq-player.php:394
+#: includes/class-smcq-player.php:430
+msgid "This exam is unavailable."
+msgstr ""
+
+#: includes/class-smcq-player.php:105
+msgid "This examination is unavailable."
+msgstr ""
+
+#: includes/class-smcq-commerce.php:228
+msgid "This is a premium exam. Purchase a qualifying product to participate."
+msgstr ""
+
+#: includes/class-smcq-practice.php:413
+msgid "This question has already been answered."
+msgstr ""
+
+#: includes/class-smcq-question-reports.php:57
+msgid "This question is not in your attempt."
+msgstr ""
+
+#: includes/class-smcq-practice.php:449
+msgid "This question is not released for student practice."
+msgstr ""
+
+#: includes/class-smcq-player.php:567
+msgid "This result could not be loaded. Contact an administrator."
+msgstr ""
+
+#: includes/class-smcq-player.php:131
+msgid "Time has expired. Your saved answers have been submitted."
+msgstr ""
+
+#: includes/class-smcq-reports.php:189
+msgid "To (UTC)"
+msgstr ""
+
+#: includes/class-smcq-importer.php:106
+msgid "To preserve Bangla text, save CSV using UTF-8 encoding. If your hosting lacks PHP ZIP and XML extensions, use CSV instead of XLSX."
+msgstr ""
+
+#: includes/class-smcq-exams.php:154
+#: includes/class-smcq-importer.php:167
+#: includes/class-smcq-questions.php:55
+msgid "Topic"
+msgstr ""
+
+#: includes/class-smcq-ai.php:24
+msgid "Topic (do not enter private student data)"
+msgstr ""
+
+#: includes/class-smcq-reports.php:239
+msgid "Topic performance (sample)"
+msgstr ""
+
+#: includes/class-smcq-questions.php:55
+msgid "Topics"
+msgstr ""
+
+#: includes/class-smcq-questions.php:98
+msgid "True/False uses only choices A and B. Multiple-answer questions need at least two correct options. Existing questions remain Single Answer."
+msgstr ""
+
+#: includes/class-smcq-questions.php:266
+msgid "Type"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:43
+msgid "Unable to load your dashboard. Refresh and try again."
+msgstr ""
+
+#: includes/class-smcq-analytics.php:267
+msgid "Unscored"
+msgstr ""
+
+#: includes/class-smcq-importer.php:370
+msgid "Unsupported imported question type."
+msgstr ""
+
+#: includes/class-smcq-editorial.php:54
+msgid "Up to 25 recent answer-and-metadata snapshots are retained. Exam attempts preserve their own historic copies."
+msgstr ""
+
+#: includes/class-smcq-importer.php:101
+msgid "Up to 500 questions and 3 MiB per upload. First worksheet only for XLSX. UTF-8 CSV recommended for maximum compatibility."
+msgstr ""
+
+#: includes/class-smcq-live-monitor.php:47
+msgid "Upcoming Examinations"
+msgstr ""
+
+#: includes/class-smcq-importer.php:102
+msgid "Upload & Preview"
+msgstr ""
+
+#: includes/class-smcq-importer.php:75
+msgid "Upload UTF-8 CSV, Excel XLSX, Word DOCX tables, or structured JSON. Review the column mapping before importing. Existing questions are never overwritten."
+msgstr ""
+
+#: includes/class-smcq-exams.php:108
+msgid "Use fixed exam marks"
+msgstr ""
+
+#: includes/class-smcq-exams.php:108
+msgid "Use individual question marks"
+msgstr ""
+
+#: includes/class-smcq-questions.php:170
+msgid "Use the Subject, Topic, Exam Source and Question Tags panels to classify this question. Marking values are stored for future exam-generation steps."
+msgstr ""
+
+#: includes/class-smcq-reports.php:348
+msgid "Use your browser’s Print dialog and choose Save as PDF. Showing at most 5,000 matching attempts."
+msgstr ""
+
+#: includes/class-smcq-analytics.php:247
+msgid "View Report"
+msgstr ""
+
+#: includes/class-smcq-security.php:251
+msgid "Visibility events and session conflicts are warning signals, not proof of cheating. Monitoring is optional for each exam. Logs exclude IP addresses and automatically expire after 30 days."
+msgstr ""
+
+#: includes/class-smcq-commerce.php:81
+msgid "WooCommerce is not active: premium exams will remain locked."
+msgstr ""
+
+#: includes/class-smcq-questions.php:167
+msgid "WordPress Media Library attachment ID (image/audio questions)"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:221
+msgid "Wrong"
+msgstr ""
+
+#: includes/class-smcq-question-reports.php:59
+msgid "You already submitted an issue for this question recently."
+msgstr ""
+
+#: includes/class-smcq-importer.php:54
+#: includes/class-smcq-importer.php:62
+msgid "You are not allowed to import questions."
+msgstr ""
+
+#: includes/class-smcq-player.php:132
+msgid "You have an unsaved answer. Leaving now may lose it."
+msgstr ""
+
+#: includes/class-smcq-player.php:452
+msgid "You have reached the attempt limit."
+msgstr ""
+
+#: includes/class-smcq-player.php:262
+msgid "Your attempt was updated in another tab. Please retry."
+msgstr ""
+
+#: includes/class-smcq-player.php:130
+msgid "Your exam has been graded. Review your results below."
+msgstr ""
+
+#: includes/class-smcq-player.php:421
+msgid "Your previous attempt was recorded."
+msgstr ""
+
+#: includes/class-smcq-reports.php:348
+msgid "attempts"
+msgstr ""
+
+#: includes/class-smcq-analytics.php:256
+msgid "maximum"
+msgstr ""
+
+#: includes/class-smcq-ai.php:19
+msgid "new question drafts created for editorial review."
+msgstr ""
+
+#: includes/class-smcq-certificates.php:30
+msgid "successfully passed"
+msgstr ""
+
+#: includes/class-smcq-importer.php:220
+msgid "— Ignore —"
+msgstr ""
