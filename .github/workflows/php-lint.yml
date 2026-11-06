@@ -1,4 +1,4 @@
-name: PHP Lint and Smart MCQ Monetization Tests
+name: PHP Lint and Smart MCQ Production Readiness Tests
 on:
   push:
   pull_request:
@@ -40,3 +40,8 @@ jobs:
         run: node --check assets/player.js
       - name: Step 11 premium exam access tests
         run: php tests/test-commerce-cli.php
+
+      - name: Step 12 diagnostics and index tests
+        run: php tests/test-health-cli.php
+      - name: Verify syntax of every JavaScript source
+        run: find assets -name '*.js' -print0 | xargs -0 -n1 node --check

@@ -8,7 +8,7 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 final class SMCQ_Practice {
-	const SCHEMA = '1';
+	const SCHEMA = '2';
 	const MAX_HISTORY = 200;
 	const MAX_POOL = 500;
 	const MAX_QUESTIONS = 20;
@@ -62,12 +62,13 @@ final class SMCQ_Practice {
 			PRIMARY KEY  (id),
 			UNIQUE KEY active_key (active_key),
 			KEY user_status (user_id,status),
-			KEY user_mode (user_id,mode)
+			KEY user_mode (user_id,mode),
+			KEY user_status_id (user_id,status,id)
 		) {$charset};" );
 		// Do not advance schema option if a host failed to create either table.
 		$book_ok = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $bookmarks ) ) );
 		$session_ok = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $sessions ) ) );
-		if ( $book_ok === $bookmarks && $session_ok === $sessions ) {
+		if ( $book_ok === $bookmarks && $session_ok === $sessions && SMCQ_Health::has_indexes( $sessions, array( 'user_status_id' ) ) ) {
 			update_option( 'smcq_practice_schema', self::SCHEMA, false );
 		}
 	}

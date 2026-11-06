@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 final class SMCQ_Player {
-	const SCHEMA_VERSION = '2';
+	const SCHEMA_VERSION = '3';
 	const ROUTE_NS = 'smcq/v1';
 
 	public static function init() {
@@ -49,12 +49,16 @@ final class SMCQ_Player {
 			PRIMARY KEY  (id),
 			UNIQUE KEY active_key (active_key),
 			KEY user_exam (user_id,exam_id),
-			KEY exam_status (exam_id,status)
+			KEY exam_status (exam_id,status),
+			KEY user_status_id (user_id,status,id),
+			KEY exam_status_id (exam_id,status,id),
+			KEY status_id (status,id),
+			KEY status_deadline (status,deadline_at)
 		) {$charset};";
 		dbDelta( $sql );
 		// Keep retrying the migration if the table or result column could not be created.
 		$column = $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM ' . $table . ' LIKE %s', 'result_json' ) );
-		if ( 'result_json' === $column ) {
+		if ( 'result_json' === $column && SMCQ_Health::has_indexes( $table, array( 'user_status_id', 'exam_status_id', 'status_id', 'status_deadline' ) ) ) {
 			update_option( 'smcq_attempt_schema', self::SCHEMA_VERSION, false );
 		}
 	}

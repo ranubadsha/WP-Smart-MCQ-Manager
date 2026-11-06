@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Smart MCQ Manager
  * Description: Private MCQ bank, CSV/XLSX import, exam builder, and authenticated examinations, grading, analytics, smart practice and private reports/exports.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Text Domain: smart-mcq-manager
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'SMCQ_VERSION' ) ) {
-	define( 'SMCQ_VERSION', '1.1.0' );
+	define( 'SMCQ_VERSION', '1.2.0' );
 }
 if ( ! defined( 'SMCQ_DIR' ) ) {
 	define( 'SMCQ_DIR', plugin_dir_path( __FILE__ ) );
@@ -23,6 +23,8 @@ if ( ! defined( 'SMCQ_URL' ) ) {
 	define( 'SMCQ_URL', plugin_dir_url( __FILE__ ) );
 }
 
+require_once SMCQ_DIR . 'includes/class-smcq-health.php';
+SMCQ_Health::init();
 require_once SMCQ_DIR . 'includes/class-smcq-questions.php';
 SMCQ_Questions::init();
 require_once SMCQ_DIR . 'includes/class-smcq-importer.php';
