@@ -1,79 +1,47 @@
-# Smart MCQ Manager — Step 4 (v0.4.0)
+# Smart MCQ Manager — Step 5 (v0.5.0)
 
-A WordPress **private question bank**, now with a controlled bulk importer for UTF-8 CSV and Excel `.xlsx`. The plugin now provides a private exam builder, but **does not yet deliver examinations to students**.
+A WordPress MCQ question bank with CSV/XLSX import, a private exam builder, and **authenticated student exam delivery**. This is a development release: **automatic grading and student results are not yet implemented**.
 
 ## Requirements
 
-- WordPress 6.0 or later; PHP 7.4 or later.
-- An admin account (`manage_options`) to run imports.
-- PHP ZIP and SimpleXML extensions **only** if importing Excel `.xlsx`; CSV does not need them.
-- A staging-site backup before upgrading an existing production installation.
+- WordPress 6.0+, PHP 7.4+, MySQL/MariaDB (WordPress supported versions).
+- For XLSX import only: PHP ZIP and SimpleXML extensions.
+- Logged-in WordPress users (including Subscriber role) can sit published exams.
+- A staging-site backup before upgrading, and a page that is **excluded from full-page caching** when it contains personalized examination content.
+- HTTPS is strongly recommended for authentication and exam data.
 
-## Step 4: Exam Builder & Question Assignment
+## Student exam: Step 5
 
-1. Open **Smart MCQ → Exams → Add New Exam**. Enter an exam name and optional instructions in the editor.
-2. Under **Examination Settings**, choose duration (1–600 minutes), passing percentage (0–100), allowed attempts (0 = unlimited), scoring policy, optional site-local start/end dates and question/answer shuffling preferences.
-3. Under **Question Selection**, search question titles or `Q-123`/numeric IDs. Add eligible questions, remove unwanted entries, then click **Save Exam & Selected Questions**. Without JavaScript, paste comma-separated question IDs into the text box and use the normal WordPress Publish/Update button.
-4. Or configure an **Automatic Question Generator** (1–200 questions; optional subject, topic, exam source, difficulty) and click **Save Exam & Generate Questions**.
-5. Exams are admin-only `smcq_exam` posts. Question IDs remain stored in `_smcq_exam_question_ids` with an ordered, unique ID list. Settings use `_smcq_exam_*` metadata.
+1. Visit **Smart MCQ → Exams** in WordPress admin. Create or edit an exam, fill in the exam instructions and settings, assign complete questions, then **Publish** it.
+2. Find the shortcode in the **Student Exam Page** panel (for example `[smcq_exam id="123"]`).
+3. Create a normal WordPress page and paste the shortcode into a Shortcode block. Publish that page and share its URL.
+4. The student logs in to WordPress and opens the page. Starting an attempt saves a **private server-side snapshot** of the questions, scoring policy, shuffled order, and answer key.
+5. Students see only question text and choice text, never the correct answer or explanation. The numbered navigator allows jumping between questions; answer choices are saved immediately using the authenticated WordPress REST API.
+6. Countdown time is controlled by the **server**, using the shorter of the exam duration and scheduled end. The browser shows a countdown, but changing browser time cannot extend a server deadline.
+7. Submit records the final answers. After timeout, already-saved answers are finalized at the first subsequent server request, even if the browser was closed. **No score is calculated yet.**
+8. A student can reopen the same exam page to resume an active attempt. Only one active attempt is allowed per user per exam. New attempts respect the configured attempt limit (0 = unlimited).
 
-### Rules & limitations
+### New shortcode
 
-- Only **published**, complete questions with four nonempty options and a valid A–D answer can be selected. They remain private; neither answer keys nor exam questions are exposed through an unauthenticated REST endpoint.
-- Random generation saves a new question set **only if it can find the entire requested number**. Otherwise the existing question set is retained and an admin error shown.
-- The generator considers at most the **2,000 latest matching questions**, then shuffles the eligible candidates; it is not a uniform sample of the entire bank above that threshold.
-- Manual selection caps lists at 200 unique questions. An invalid/unpublished ID is excluded with an admin warning.
-- Scheduling, attempt limits, order randomization and scoring are **configuration only** in this release. No countdown, student access, grading, registration, subscriptions or result/attempt snapshots are implemented yet. Exam question IDs point at live question records: modifying a question changes the future content of this exam until snapshot support ships.
-- All exam writes use editor permissions and WordPress nonces; authenticated title search returns no answers. Back up the database before upgrading.
+`[smcq_exam id="123"]` — renders an authenticated, responsive MCQ exam UI for a **published** exam. The exam itself is stored in a private WordPress post type. Explanations and answers remain private; do not put answer keys into a public WordPress page.
 
-## Step 3: Bulk Import
+### Data model and privacy
 
-1. Log in as an administrator and open **Smart MCQ → Bulk Import**.
-2. Download the **Sample CSV Template**, or prepare an `.xlsx` worksheet with one header row.
-3. Upload a `.csv` / `.xlsx` file, then inspect the first **five rows**.
-4. Map CSV/Excel columns to `question`, `option_a`, `option_b`, `option_c`, `option_d`, `correct` (these **six** are required). Map optional columns, or set them to **Ignore**.
-5. Choose **Draft** (recommended) or **Published**. Note: published question *posts* are still a private WordPress post type, not public exam questions.
-6. Start the import. Process **40 questions per request** via the **Continue Next Batch** button until complete. Review the counts and errors.
+Activation / upgrading creates a dedicated `{$wpdb->prefix}smcq_attempts` table with a **unique active attempt key** so simultaneous tabs cannot create two active attempts for one user/exam. It stores the owner user ID, exam ID, answer JSON, private exam snapshot, timestamps, status, completion reason, and a version number to prevent stale saves overwriting newer answers. Existing questions and exam metadata from Steps 1–4 are not modified.
 
-**File limits:** up to 500 data rows, 32 columns, and 3 MiB per upload (and 2 MiB for parsed preview data). For larger imports, split into multiple files. XLSX reads the **first worksheet** and does not calculate spreadsheet formulas (formula cells are rejected). CSV should be saved as **UTF-8** to preserve Bangla.
+A student's REST endpoints require WordPress login and the REST nonce. Every attempt read/write also checks the logged-in **owner**. Answer submissions are strictly validated against the frozen question set, and saved via a version-checked SQL update. Server-side deadline checks reject late writes. Exam question posts and correct answers are still excluded from public REST routes. A privacy exporter and eraser are registered for recorded attempts.
 
-### Fields
+**Current limitations:** No grading, score reports, answer review, public leaderboard, paid exam controls, anti-cheating surveillance, or offline queued saving yet. Students must have a connection to save each answer. A failed save shows an error; retry the answer before submitting. Timeout finalization is **lazy** (on the next API request); no background cron job is required. Page/cache plugins should exclude exam pages and `/wp-json/smcq/v1/` endpoints. The admin exam builder still limits question sets to 200 and the import tool still caps uploads at 500 rows. Test real concurrent users and caching on staging before production use.
 
-| Column | Allowed examples | Default |
-| --- | --- | --- |
-| `question` | বাংলা / English question | required |
-| `option_a` – `option_d` | Answer option text | required |
-| `correct` | A, B, C, D | required |
-| `explanation` | Text/limited safe HTML | blank |
-| `subject` | General Knowledge | blank |
-| `topic` | Bangladesh | blank |
-| `exam_source` | BCS | blank |
-| `tags` | `Bangladesh\|Geography` | blank |
-| `difficulty` | easy, medium, hard | easy |
-| `language` | bn, en, mixed | bn |
-| `exam_year` | 2026 (1900–2100) | blank |
-| `reference` | Book title | blank |
-| `reference_url` | https://example.org/ | blank |
-| `marks` | 1 | 1 |
-| `negative_marks` | 0.25 | 0 |
+## Earlier features retained
 
-### Duplicate handling and validation
+- Private question bank with A/B/C/D, correct answer, rich explanation, subject/topic/exam source, tags, difficulty, language, years, references, and marks.
+- Bulk CSV/XLSX importer: column mapping, five-row preview, validation, duplicate checks, 40-row batches; 500-row / 3 MiB per-file cap. XLSX first-worksheet formulas are rejected.
+- Exam builder: manual question selection and filtered generator by subject/topic/source/difficulty; 200-question maximum. Duration (1–600 minutes), schedule, attempt limits, positive/negative marks, passing percentage, question shuffle, option shuffle.
 
-- The importer **never overwrites** existing questions.
-- A SHA-256 hash of case-normalized, whitespace-normalized question text is stored as `_smcq_question_hash` for imported questions; future imports skip matches to that hash. For older Step 1/2 questions, identical original titles are also checked.
-- Similar questions with different wording, punctuation, or casing not caught by the legacy exact-title fallback may still need manual review. This is not semantic duplicate detection.
-- All four options and a valid A–D key are required. Invalid questions are **skipped**, counted and reported (up to 15 specific row errors).
-- Optional classifications are created as WordPress taxonomy terms (subject, topic, exam source, tags).
-- Uploads are parsed from temporary PHP upload files; no original upload is placed in a publicly reachable directory. Parsed preview rows live in a **per-admin WordPress transient** for up to 30 minutes, refreshed after each batch and deleted after successful completion.
-- **Cancel** stops remaining imports; it does **not** undo questions already inserted. Site backups are recommended before large imports.
+## Upgrade from Step 4
 
-## Upgrade from Step 2
-
-WordPress → Plugins → Add New Plugin → Upload Plugin → choose the v0.3.0 ZIP → **Replace current with uploaded**. Keep the same plugin directory `smart-mcq-manager`. **Do not delete or uninstall** the existing plugin while upgrading. Original posts, taxonomies and option/explanation metadata from earlier steps are retained. Take a database backup first.
-
-## Security
-
-The question post type remains private with REST disabled. All import mutations require `manage_options` and WordPress nonces. Field mapping is checked server-side; input and output are validated/escaped. Import logic refuses formula cells in XLSX and enforces compressed and uncompressed size ceilings.
+Back up the site database. In **Plugins → Add New → Upload Plugin**, choose `smart-mcq-manager-step5-v0.5.0.zip` and **Replace current with uploaded**. The installed directory should remain `smart-mcq-manager`. Do not uninstall the prior plugin; this is an in-place update. Ensure the DB user has permission to create tables on activation/upgrade. Verify the table was created, publish a sample exam, and test as a Subscriber on staging.
 
 ## Development checks
 
@@ -81,10 +49,14 @@ The question post type remains private with REST disabled. All import mutations 
 find . -name '*.php' -print0 | xargs -0 -n1 php -l
 php tests/test-importer-cli.php
 php tests/test-exams-cli.php
+php tests/test-player-cli.php
+node --check assets/player.js
 ```
 
-**Limitations:** The importer is for administrator use and is not a publicly exposed REST API. Performance depends on the site's WordPress/database configuration. Test the preview with a small CSV on staging before importing hundreds of questions.
+`test-player-cli.php` covers timezone conversion, deadline precedence, snapshot answer-key redaction, shuffled choice keys, and invalid answer rejection. The GitHub Actions workflow runs checks across PHP 7.4 / 8.2 / 8.3. These are **not** a replacement for WordPress integration/browser tests.
 
-**Next:** Step 5 — Authenticated frontend examination delivery with server-enforced start/end rules, private answer handling and attempt snapshots.
+## Step 6 (planned)
+
+Add automatic grading, negative marking, results, answer review, and student exam history based on the immutable Step 5 attempt snapshots.
 
 License: GPL-2.0-or-later.

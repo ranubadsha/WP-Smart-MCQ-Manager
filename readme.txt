@@ -1,59 +1,35 @@
 === Smart MCQ Manager ===
 Contributors: smart-mcq
-Tags: mcq, question bank, csv import, xlsx import, bangla
 Requires at least: 6.0
 Requires PHP: 7.4
-Stable tag: 0.4.0
+Stable tag: 0.5.0
 License: GPLv2 or later
-License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Private question-bank plugin with CSV/XLSX bulk imports, question explanations and classifications.
+Step 5: Private MCQ question bank, bulk question import, exam builder, and secure logged-in student exam interface.
 
 == Description ==
+Features:
+* Private question editor with four options, answer key, explanation and classification.
+* Bulk CSV/XLSX import with mapping, validation, preview, and duplicate checks.
+* Exam creation with manual/filtered question assignment and exam scheduling.
+* Logged-in student exam interface via [smcq_exam id="123"].
+* One active attempt per user/exam, allowed-attempt caps and server-side deadlines.
+* AJAX-style REST answer saving, mobile navigation, and automatic timeout finalization on next server request.
+* Immutable attempt snapshots hide correct answers from the student.
+* WordPress privacy data exporter / eraser for attempts.
 
-Steps 1-4 includes:
-* Private admin-only MCQ question bank with four choices and rich explanations.
-* Subject, Topic, Exam Source, and Tag taxonomies.
-* Difficulty, Language, Exam Year, References, Marks and Negative Marks.
-* Admin question filters, identifiers, and completeness indicators.
-* UTF-8 CSV / first-sheet Excel XLSX bulk import with column mapping and five-row preview.
-* Validates rows, skips exact duplicates, imports in 40-question batches, and reports errors.
-
-This is **not yet** a frontend examination system.
+Not included yet: score calculation, negative-mark grading, answer review, reports, and student history. They are planned for Step 6.
 
 == Installation ==
+1. Back up your database, and use a staging site for initial testing.
+2. Plugins -> Add New -> Upload Plugin -> select ZIP; replace current plugin when upgrading.
+3. Create and publish an exam under Smart MCQ -> Exams.
+4. Put [smcq_exam id="123"] (replace 123 with your exam post ID) on a WordPress page.
+5. Log in as a student and start the examination.
 
-1. Back up WordPress before upgrading.
-2. Install or replace via Plugins > Add New Plugin > Upload Plugin.
-3. Open Smart MCQ > Bulk Import to upload and preview questions.
-4. Confirm the column mapping, then continue each import batch until completion.
-
-== Frequently Asked Questions ==
-
-= Can I import Bangla? =
-Yes, save your CSV as UTF-8. Excel .xlsx also supports Unicode.
-
-= Do I need a PHP extension for XLSX? =
-Yes, PHP ZIP and SimpleXML. CSV does not require either.
-
-= What is the import limit? =
-500 data rows and 3 MiB per upload. Split larger datasets into separate files.
-
-= Can I undo an import? =
-Cancel stops the unprocessed batches but does not remove questions that were already added. Back up your database before large imports.
-
-= Are questions publicly accessible? =
-No. The question post type is private and its REST API disabled.
-
-== Changelog ==
-
-= 0.3.0 =
-* Add private CSV/XLSX bulk import, mapping, preview, validation, deduplication and batch summaries.
-
-= 0.2.0 =
-* Add advanced question classifications, metadata and admin filters.
-
-= 0.1.0 =
-* Initial private question bank.
-
-Step 4 exam builder: Create private exams under Smart MCQ > Exams, configure duration and marking, select complete published questions manually, or generate a filtered set by subject, topic, source and difficulty. No student exam delivery yet.
+== Important ==
+* Students must log in. HTTPS recommended; exclude exam pages and /wp-json/smcq/v1/ from page caches.
+* Saving requires an internet connection. If a save fails, retry it before submitting.
+* Timeout finalization occurs on the next API call, not via background cron.
+* WordPress 6.0+ and PHP 7.4+. Excel import needs ZIP/SimpleXML PHP extensions.
+* Do not uninstall the previous version during upgrades; retain existing questions and exams.

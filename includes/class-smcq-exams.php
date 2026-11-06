@@ -100,7 +100,7 @@ final class SMCQ_Exams {
 		$start = (string) get_post_meta( $post->ID, '_smcq_exam_start', true );
 		$end = (string) get_post_meta( $post->ID, '_smcq_exam_end', true );
 		?>
-		<p class="description"><?php esc_html_e( 'Configure an exam blueprint. Question order and scoring options will be enforced when student exam delivery is added in a later release.', 'smart-mcq-manager' ); ?></p>
+		<p class="description"><?php esc_html_e( 'Configure an exam blueprint. Exam time limits, attempt limits, scheduling, and question/option order are enforced for student attempts. Automatic grading will be added in Step 6.', 'smart-mcq-manager' ); ?></p>
 		<div class="smcq-exam-settings-grid">
 			<p><label for="smcq_exam_duration"><strong><?php esc_html_e( 'Duration (minutes)', 'smart-mcq-manager' ); ?></strong></label><input class="widefat" type="number" id="smcq_exam_duration" name="smcq_exam_duration" min="1" max="600" required value="<?php echo esc_attr( $duration ); ?>" /></p>
 			<p><label for="smcq_exam_pass_percent"><strong><?php esc_html_e( 'Passing percentage', 'smart-mcq-manager' ); ?></strong></label><input class="widefat" type="number" id="smcq_exam_pass_percent" name="smcq_exam_pass_percent" min="0" max="100" step="0.01" value="<?php echo esc_attr( $pass ); ?>" /></p>
@@ -113,7 +113,7 @@ final class SMCQ_Exams {
 		</div>
 		<p><label><input type="checkbox" name="smcq_exam_shuffle_questions" value="1" <?php checked( self::meta( $post->ID, '_smcq_exam_shuffle_questions', 0 ), 1 ); ?> /> <?php esc_html_e( 'Shuffle question order for each future attempt', 'smart-mcq-manager' ); ?></label></p>
 		<p><label><input type="checkbox" name="smcq_exam_shuffle_options" value="1" <?php checked( self::meta( $post->ID, '_smcq_exam_shuffle_options', 0 ), 1 ); ?> /> <?php esc_html_e( 'Shuffle answer order for each future attempt', 'smart-mcq-manager' ); ?></label></p>
-		<p class="description"><?php esc_html_e( 'Dates use the WordPress site timezone (Settings → General). The schedule is saved now but is not yet used to admit students.', 'smart-mcq-manager' ); ?></p>
+		<p class="description"><?php esc_html_e( 'Dates use the WordPress site timezone (Settings → General). The schedule controls student admission, and the closing time limits each attempt.', 'smart-mcq-manager' ); ?></p>
 		<?php
 	}
 
