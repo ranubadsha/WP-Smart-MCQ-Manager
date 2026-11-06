@@ -114,8 +114,9 @@ final class SMCQ_Analytics {
 				$id = (string) $question['id'];
 				$given = isset( $answers[ $id ] ) ? $answers[ $id ] : null;
 				$options = isset( $question['options'] ) && is_array( $question['options'] ) ? $question['options'] : array();
-				$attempted = is_string( $given ) && array_key_exists( $given, $options );
-				$is_correct = $attempted && isset( $question['correct'] ) && $given === (string) $question['correct'];
+				$canonical = SMCQ_Question_Types::canonical( $given, SMCQ_Question_Types::type( isset( $question['type'] ) ? $question['type'] : 'single' ), $options );
+				$attempted = null !== $canonical;
+				$is_correct = $attempted && isset( $question['correct'] ) && $canonical === (string) $question['correct'];
 				foreach ( array( 'subjects' => &$subjects, 'topics' => &$topics ) as $key => &$bucket ) {
 					$labels = isset( $question[ $key ] ) && is_array( $question[ $key ] ) ? $question[ $key ] : array();
 					foreach ( array_unique( $labels ) as $label ) {

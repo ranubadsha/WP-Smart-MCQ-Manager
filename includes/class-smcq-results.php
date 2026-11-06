@@ -26,7 +26,9 @@ final class SMCQ_Results {
 			$choice = isset( $answers[ $id ] ) ? $answers[ $id ] : null;
 			$correct_key = isset( $question['correct'] ) ? (string) $question['correct'] : '';
 			$options = isset( $question['options'] ) && is_array( $question['options'] ) ? $question['options'] : array();
-			if ( ! is_string( $choice ) || '' === $choice || ! array_key_exists( $choice, $options ) ) {
+			$type = SMCQ_Question_Types::type( isset( $question['type'] ) ? $question['type'] : 'single' );
+			$choice = SMCQ_Question_Types::canonical( $choice, $type, $options );
+			if ( null === $choice ) {
 				++$unanswered;
 			} elseif ( hash_equals( $correct_key, $choice ) ) {
 				++$correct;
@@ -69,7 +71,8 @@ final class SMCQ_Results {
 			$options = isset( $question['options'] ) && is_array( $question['options'] ) ? $question['options'] : array();
 			$order = isset( $question['order'] ) && is_array( $question['order'] ) ? $question['order'] : array( 'A', 'B', 'C', 'D' );
 			$correct = isset( $question['correct'] ) ? (string) $question['correct'] : '';
-			$choice = isset( $answers[ (string) $id ] ) && is_string( $answers[ (string) $id ] ) && array_key_exists( $answers[ (string) $id ], $options ) ? $answers[ (string) $id ] : null;
+			$type = SMCQ_Question_Types::type( isset( $question['type'] ) ? $question['type'] : 'single' );
+			$choice = SMCQ_Question_Types::canonical( isset( $answers[ (string) $id ] ) ? $answers[ (string) $id ] : null, $type, $options );
 			$state = null === $choice ? 'unanswered' : ( $choice === $correct ? 'correct' : 'wrong' );
 			$mapped = array();
 			foreach ( $order as $i => $key ) {
@@ -81,6 +84,9 @@ final class SMCQ_Results {
 			$penalty = self::safe_mark( isset( $question['negative'] ) ? $question['negative'] : 0, 0 );
 			$review[] = array(
 				'questionId' => $id,
+				'type' => $type,
+				'passage' => isset( $question['passage'] ) ? $question['passage'] : '',
+				'media' => isset( $question['media'] ) ? $question['media'] : '',
 				'title' => isset( $question['title'] ) ? (string) $question['title'] : '',
 				'options' => $mapped,
 				'yourAnswer' => $choice,

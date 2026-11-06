@@ -45,3 +45,6 @@ jobs:
         run: php tests/test-health-cli.php
       - name: Verify syntax of every JavaScript source
         run: find assets -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Step 13 extended question format tests
+        run: php tests/test-question-types-cli.php

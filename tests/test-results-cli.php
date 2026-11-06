@@ -1,6 +1,7 @@
 <?php
 /** Pure grading and answer-key review tests, runnable without WordPress. */
 define( 'ABSPATH', __DIR__ . '/' );
+require_once dirname( __DIR__ ) . '/includes/class-smcq-question-types.php';
 require_once dirname( __DIR__ ) . '/includes/class-smcq-results.php';
 function check( $want, $got, $test ) {
 	if ( $want !== $got ) {

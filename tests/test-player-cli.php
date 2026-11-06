@@ -1,6 +1,7 @@
 <?php
 /** Standalone tests of the safety-critical pure helpers, without WordPress bootstrapping. */
 define( 'ABSPATH', __DIR__ . '/' );
+require_once dirname( __DIR__ ) . '/includes/class-smcq-question-types.php';
 function wp_timezone() { return new DateTimeZone( 'Asia/Dhaka' ); }
 require_once dirname( __DIR__ ) . '/includes/class-smcq-player.php';
 function assert_same( $expected, $actual, $message ) {

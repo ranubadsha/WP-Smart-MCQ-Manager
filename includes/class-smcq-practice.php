@@ -171,8 +171,9 @@ final class SMCQ_Practice {
 				if ( $id < 1 ) { continue; }
 				$choice = isset( $answers[(string) $id] ) && is_string( $answers[(string) $id] ) ? $answers[(string) $id] : '';
 				$options = isset( $q['options'] ) && is_array( $q['options'] ) ? $q['options'] : array();
-				$attempted = '' !== $choice && array_key_exists( $choice, $options );
-				$correct = $attempted && isset( $q['correct'] ) && $choice === (string) $q['correct'];
+				$canonical = SMCQ_Question_Types::canonical( $choice, SMCQ_Question_Types::type( isset( $q['type'] ) ? $q['type'] : 'single' ), $options );
+				$attempted = null !== $canonical;
+				$correct = $attempted && isset( $q['correct'] ) && $canonical === (string) $q['correct'];
 				// Rows are descending: the first seen answered status is the most recent one.
 				if ( $attempted && ! isset( $latest[$id] ) ) { $latest[$id] = $correct ? 'correct' : 'wrong'; }
 				if ( $attempted ) {
@@ -246,14 +247,18 @@ final class SMCQ_Practice {
 		foreach ( $ids as $id ) {
 			if ( ! self::eligible( $id ) ) { continue; }
 			$raw = get_post_meta( $id, '_smcq_options', true );
-			$order = array( 'A', 'B', 'C', 'D' );
+			$type = SMCQ_Question_Types::type( get_post_meta( $id, '_smcq_type', true ) );
+			$order = SMCQ_Question_Types::keys( $type );
 			shuffle( $order );
 			$questions[] = array(
 				'id' => $id,
 				'title' => wp_strip_all_tags( get_the_title( $id ), true ),
 				'options' => array_map( 'strval', $raw ),
 				'order' => $order,
-				'correct' => (string) get_post_meta( $id, '_smcq_correct', true ),
+				'correct' => SMCQ_Question_Types::correct_from_meta( $id ),
+				'type' => $type,
+				'passage' => 'passage' === $type ? wp_strip_all_tags( (string) get_post_meta( $id, '_smcq_passage', true ), true ) : '',
+				'media' => SMCQ_Question_Types::media_url( get_post_meta( $id, '_smcq_media_id', true ), $type ),
 				'explanation' => wp_strip_all_tags( (string) get_post_meta( $id, '_smcq_explanation', true ), true ),
 				'points' => 1.0, 'negative' => 0.0,
 			);

@@ -72,7 +72,7 @@ final class SMCQ_Importer {
 		?>
 		<div class="wrap smcq-import-wrap">
 			<h1><?php esc_html_e( 'Bulk Import MCQ Questions', 'smart-mcq-manager' ); ?></h1>
-			<p><?php esc_html_e( 'Upload UTF-8 CSV or Excel .xlsx. Review the column mapping before importing. Existing questions are never overwritten.', 'smart-mcq-manager' ); ?></p>
+			<p><?php esc_html_e( 'Upload UTF-8 CSV, Excel XLSX, or structured JSON. Review the column mapping before importing. Existing questions are never overwritten.', 'smart-mcq-manager' ); ?></p>
 			<?php if ( isset( $errors[ $error ] ) ) : ?>
 				<div class="notice notice-error"><p><?php echo esc_html( $errors[ $error ] ); ?></p></div>
 			<?php endif; ?>
@@ -96,8 +96,8 @@ final class SMCQ_Importer {
 					<form enctype="multipart/form-data" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 						<input type="hidden" name="action" value="smcq_import_preview" />
 						<?php wp_nonce_field( 'smcq_import_preview' ); ?>
-						<p><label for="smcq_import_file"><strong><?php esc_html_e( 'Question file (.csv or .xlsx)', 'smart-mcq-manager' ); ?></strong></label></p>
-						<p><input required type="file" id="smcq_import_file" name="smcq_import_file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" /></p>
+						<p><label for="smcq_import_file"><strong><?php esc_html_e( 'Question file (.csv, .xlsx or .json)', 'smart-mcq-manager' ); ?></strong></label></p>
+						<p><input required type="file" id="smcq_import_file" name="smcq_import_file" accept=".csv,.xlsx,.json,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" /></p>
 						<p class="description"><?php esc_html_e( 'Up to 500 questions and 3 MiB per upload. First worksheet only for XLSX. UTF-8 CSV recommended for maximum compatibility.', 'smart-mcq-manager' ); ?></p>
 						<?php submit_button( __( 'Upload & Preview', 'smart-mcq-manager' ) ); ?>
 					</form>
@@ -124,10 +124,10 @@ final class SMCQ_Importer {
 			self::redirect_error( 'bad_file' );
 		}
 		$extension = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
-		if ( ! in_array( $extension, array( 'csv', 'xlsx' ), true ) ) {
+		if ( ! in_array( $extension, array( 'csv', 'xlsx', 'json' ), true ) ) {
 			self::redirect_error( 'bad_file' );
 		}
-		$data = 'csv' === $extension ? self::parse_csv( $file['tmp_name'] ) : self::parse_xlsx( $file['tmp_name'] );
+		$data = 'csv' === $extension ? self::parse_csv( $file['tmp_name'] ) : ( 'json' === $extension ? self::parse_json( $file['tmp_name'] ) : self::parse_xlsx( $file['tmp_name'] ) );
 		if ( is_wp_error( $data ) || strlen( serialize( $data ) ) > 2097152 ) {
 			self::redirect_error( 'bad_file' );
 		}
@@ -482,6 +482,32 @@ final class SMCQ_Importer {
 
 	private static function truncate( $text, $limit ) {
 		return function_exists( 'mb_strimwidth' ) ? mb_strimwidth( (string) $text, 0, $limit, '…', 'UTF-8' ) : substr( (string) $text, 0, $limit );
+	}
+
+	/** Decode structured, UTF-8 JSON arrays into the existing preview-and-map importer. */
+	private static function parse_json( $path ) {
+		if ( ! is_file( $path ) || filesize( $path ) > self::MAX_BYTES ) { return new WP_Error( 'file', 'Invalid JSON file size.' ); }
+		$raw = file_get_contents( $path );
+		if ( false === $raw || ! preg_match( '//u', $raw ) ) { return new WP_Error( 'utf8', 'Invalid UTF-8 JSON.' ); }
+		$data = json_decode( $raw, true, 16 );
+		if ( ! is_array( $data ) ) { return new WP_Error( 'json', 'JSON must be a list of question objects.' ); }
+		if ( isset( $data['questions'] ) ) { $data = $data['questions']; }
+		if ( ! is_array( $data ) || ! $data || count( $data ) > self::MAX_ROWS || array_keys( $data ) !== range( 0, count( $data ) - 1 ) ) {
+			return new WP_Error( 'json_shape', 'Provide a list of up to 500 question objects.' );
+		}
+		$headers = array_keys( self::field_labels() );
+		$rows = array();
+		foreach ( $data as $i => $record ) {
+			if ( ! is_array( $record ) ) { return new WP_Error( 'json_item', 'Every question must be an object.' ); }
+			$cells = array();
+			foreach ( $headers as $key ) {
+				$value = isset( $record[ $key ] ) ? $record[ $key ] : '';
+				if ( ! is_scalar( $value ) && null !== $value ) { return new WP_Error( 'json_value', 'Nested objects or lists are not permitted in question fields.' ); }
+				$cells[] = null === $value ? '' : (string) $value;
+			}
+			$rows[] = array( 'line' => $i + 1, 'cells' => $cells );
+		}
+		return self::finalize_rows( $headers, $rows );
 	}
 
 	/** Parse RFC 4180-ish CSV, preserving quoted newlines and UTF-8. */

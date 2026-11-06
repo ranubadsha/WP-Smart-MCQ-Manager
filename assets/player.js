@@ -52,6 +52,21 @@
         container.appendChild(save);
     }
 
+    function addIssueReport(parent, item, attemptId) {
+        if (!attemptId || !item.questionId) return;
+        parent.appendChild(makeButton('Report a Question Error', 'smcq-button smcq-report-issue', function () {
+            var reason = window.prompt('Issue type: incorrect_key, unclear_wording, incorrect_explanation, missing_information, other', 'incorrect_key');
+            if (reason === null) return;
+            if (['incorrect_key', 'unclear_wording', 'incorrect_explanation', 'missing_information', 'other'].indexOf(reason) === -1) { window.alert('Choose one of the listed issue types.'); return; }
+            var details = window.prompt('Describe the issue (15–2,000 characters).');
+            if (details === null) return;
+            if (details.length < 15 || details.length > 2000) { window.alert('Description must contain 15–2,000 characters.'); return; }
+            request('attempts/' + attemptId + '/report-question', 'POST', { questionId: item.questionId, reason: reason, details: details }).then(function () {
+                window.alert('Question issue submitted for administrator review.');
+            }).catch(function (e) { window.alert(e.message || 'Unable to report the question.'); });
+        }));
+    }
+
     document.querySelectorAll('.smcq-player[data-exam-id]').forEach(function (root) {
         var examId = Number(root.getAttribute('data-exam-id'));
         var status = root.querySelector('.smcq-player-status');
@@ -191,6 +206,32 @@
                 finalize(false);
             }
         }
+        function addQuestionContext(target, question) {
+            if (question.passage) target.appendChild(create('blockquote', 'smcq-passage', question.passage));
+            if (question.media) {
+                var kind = question.type === 'audio' ? 'audio' : 'image';
+                var url;
+                try { url = new URL(question.media, window.location.href); } catch (e) { return; }
+                if (url.protocol !== 'https:' && url.protocol !== 'http:') return;
+                var el = document.createElement(kind === 'audio' ? 'audio' : 'img');
+                el.src = url.href;
+                if (kind === 'audio') { el.controls = true; el.preload = 'none'; }
+                else { el.alt = 'Question illustration'; el.loading = 'lazy'; }
+                el.className = 'smcq-question-media';
+                target.appendChild(el);
+            }
+        }
+        function chosenKeys(answer) { return typeof answer === 'string' ? answer.split(',') : []; }
+        function addReviewOptions(target, item) {
+            var correct = chosenKeys(item.correctAnswer), yours = chosenKeys(item.yourAnswer);
+            var list = create('ol', 'smcq-review-options');
+            item.options.forEach(function (option) {
+                var isCorrect = correct.indexOf(option.key) !== -1;
+                var isChosen = yours.indexOf(option.key) !== -1;
+                list.appendChild(create('li', 'smcq-review-option' + (isCorrect ? ' is-correct' : '') + (isChosen && !isCorrect ? ' is-wrong' : ''), option.label + '. ' + option.text + (isCorrect ? ' ✓ Correct' : '') + (isChosen ? ' · Your answer' : '')));
+            });
+            target.appendChild(list);
+        }
         function render() {
             if (!active || ended) return;
             clearBody();
@@ -211,19 +252,28 @@
             body.appendChild(create('p', 'smcq-progress', 'Question ' + (index + 1) + ' of ' + questions.length + ' · Answered: ' + answered));
             var form = create('fieldset', 'smcq-question');
             form.appendChild(create('legend', '', question.title));
+            addQuestionContext(form, question);
+            if (question.type === 'multiple') form.appendChild(create('p', 'smcq-note', 'Select all correct options, then select Save Selected Answers.'));
             question.options.forEach(function (option) {
                 var label = create('label', 'smcq-option');
                 var input = create('input');
-                input.type = 'radio';
+                input.type = question.type === 'multiple' ? 'checkbox' : 'radio';
                 input.name = 'smcq-choice-' + active.attemptId;
                 input.value = option.key;
-                input.checked = active.answers[String(question.id)] === option.key;
+                input.checked = chosenKeys(active.answers[String(question.id)]).indexOf(option.key) !== -1;
                 input.disabled = busy || unsaved;
-                input.addEventListener('change', function () { saveAnswer(question.id, option.key); });
+                if (question.type !== 'multiple') input.addEventListener('change', function () { saveAnswer(question.id, option.key); });
                 label.appendChild(input);
                 label.appendChild(create('span', '', option.label + '. ' + option.text));
                 form.appendChild(label);
             });
+            if (question.type === 'multiple') {
+                form.appendChild(makeButton('Save Selected Answers', 'smcq-button smcq-primary', function () {
+                    var selected = Array.prototype.slice.call(form.querySelectorAll('input[type="checkbox"]:checked')).map(function (input) { return input.value; });
+                    selected.sort();
+                    saveAnswer(question.id, selected.length ? selected.join(',') : null);
+                }));
+            }
             body.appendChild(form);
             var actions = create('div', 'smcq-player-actions');
             var prev = makeButton('← Previous', 'smcq-button', function () { if (index > 0) { index--; render(); } });
@@ -321,16 +371,12 @@
                     var details = create('details', 'smcq-review smcq-review-' + item.status);
                     var heading = create('summary', '', 'Q' + (idx + 1) + ': ' + item.title + ' — ' + item.status + ' (' + item.earnedMarks + ' marks)');
                     details.appendChild(heading);
-                    var list = create('ol', 'smcq-review-options');
-                    item.options.forEach(function (option) {
-                        var li = create('li', 'smcq-review-option' + (option.key === item.correctAnswer ? ' is-correct' : '') + (option.key === item.yourAnswer && option.key !== item.correctAnswer ? ' is-wrong' : ''),
-                            option.label + '. ' + option.text + (option.key === item.correctAnswer ? ' ✓ Correct' : '') + (option.key === item.yourAnswer ? ' · Your answer' : ''));
-                        list.appendChild(li);
-                    });
-                    details.appendChild(list);
+                    addQuestionContext(details, item);
+                    addReviewOptions(details, item);
                     if (!item.yourAnswer) details.appendChild(create('p', '', 'You did not answer this question.'));
                     if (item.explanation) details.appendChild(create('p', 'smcq-explanation', 'Explanation: ' + item.explanation));
                     addPracticeBookmark(details, item);
+                    addIssueReport(details, item, result.attemptId);
                     container.appendChild(details);
                 });
             }
@@ -399,14 +445,11 @@
             (result.review || []).forEach(function (item, i) {
                 var box = create('details', 'smcq-review smcq-review-' + item.status);
                 box.appendChild(create('summary', '', (i + 1) + '. ' + item.title + ' — ' + item.status));
-                var list = create('ol', 'smcq-review-options');
-                item.options.forEach(function (option) {
-                    list.appendChild(create('li', (option.key === item.correctAnswer ? 'is-correct ' : '') + (option.key === item.yourAnswer && option.key !== item.correctAnswer ? 'is-wrong' : ''),
-                        option.label + '. ' + option.text + (option.key === item.correctAnswer ? ' ✓ Correct' : '') + (option.key === item.yourAnswer ? ' · Your answer' : '')));
-                });
-                box.appendChild(list);
+                addQuestionContext(box, item);
+                addReviewOptions(box, item);
                 if (item.explanation) box.appendChild(create('p', 'smcq-explanation', 'Explanation: ' + item.explanation));
                 addPracticeBookmark(box, item);
+                addIssueReport(box, item, result.attemptId);
                 body.appendChild(box);
             });
             body.appendChild(makeButton('← Exam History', 'smcq-button', function () { loadHistory(page); }));

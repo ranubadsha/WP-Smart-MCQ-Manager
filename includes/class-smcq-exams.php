@@ -188,17 +188,10 @@ final class SMCQ_Exams {
 		if ( ! $post || 'smcq_question' !== $post->post_type || 'publish' !== $post->post_status || '' === trim( $post->post_title ) ) {
 			return false;
 		}
-		$options = get_post_meta( $id, '_smcq_options', true );
-		$correct = get_post_meta( $id, '_smcq_correct', true );
-		if ( ! is_array( $options ) || ! in_array( $correct, array( 'A', 'B', 'C', 'D' ), true ) ) {
-			return false;
-		}
-		foreach ( array( 'A', 'B', 'C', 'D' ) as $key ) {
-			if ( ! isset( $options[ $key ] ) || ! is_string( $options[ $key ] ) || '' === trim( $options[ $key ] ) ) {
-				return false;
-			}
-		}
-		return true;
+		$type = SMCQ_Question_Types::type( get_post_meta( $id, '_smcq_type', true ) );
+		$passage = (string) get_post_meta( $id, '_smcq_passage', true );
+		$media = SMCQ_Question_Types::media_url( get_post_meta( $id, '_smcq_media_id', true ), $type );
+		return SMCQ_Question_Types::ready( $type, get_post_meta( $id, '_smcq_options', true ), SMCQ_Question_Types::correct_from_meta( $id ), $passage, $media );
 	}
 
 	/** Select from filtered published questions and do not save partial sets. */

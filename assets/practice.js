@@ -161,29 +161,56 @@
             var card = el('article', 'smcq-practice-question');
             card.appendChild(el('h3', '', 'Question ' + (currentIndex + 1) + ' of ' + questions.length));
             card.appendChild(el('p', 'smcq-practice-title', question.title));
+            if (question.passage) card.appendChild(el('blockquote', 'smcq-passage', question.passage));
+            if (question.media) {
+                try {
+                    var mediaUrl = new URL(question.media, window.location.href);
+                    if (mediaUrl.protocol === 'https:' || mediaUrl.protocol === 'http:') {
+                        var media = document.createElement(question.type === 'audio' ? 'audio' : 'img');
+                        media.src = mediaUrl.href; media.className = 'smcq-question-media';
+                        if (question.type === 'audio') { media.controls = true; media.preload = 'none'; }
+                        else { media.alt = 'Question illustration'; media.loading = 'lazy'; }
+                        card.appendChild(media);
+                    }
+                } catch (e) { /* Invalid media URL is ignored. */ }
+            }
             var form = el('div', 'smcq-practice-options');
+            var multi = question.type === 'multiple';
+            var selected = [];
+            function includesKey(answer, key) { return typeof answer === 'string' && answer.split(',').indexOf(key) !== -1; }
+            async function submitPractice(choice) {
+                if (busy || current.status !== 'active' || feedback) return;
+                busy = true; message('Saving your answer…');
+                try {
+                    var updated = await api('practice/answer', 'POST', { sessionId: current.sessionId, questionId: question.id, choice: choice, version: current.version });
+                    current = updated; render();
+                } catch (error) {
+                    message(error.message, true);
+                    if (error.status === 409) body.appendChild(button('Reload Latest Session', async function () { try { showSession(await api('practice/state?id=' + current.sessionId)); } catch (err) { message(err.message, true); } }));
+                } finally { busy = false; }
+            }
             question.options.forEach(function (opt) {
                 var text = opt.label + '. ' + opt.text;
                 var key = opt.key;
                 var klass = 'smcq-practice-option';
-                if (feedback && key === feedback.correctAnswer) klass += ' is-correct';
-                if (feedback && key === feedback.yourAnswer && key !== feedback.correctAnswer) klass += ' is-wrong';
-                var b = button(text, async function () {
-                    if (busy || current.status !== 'active' || feedback) return;
-                    busy = true;
-                    message('Saving your answer…');
-                    try {
-                        var updated = await api('practice/answer', 'POST', { sessionId: current.sessionId, questionId: question.id, choice: key, version: current.version });
-                        current = updated;
-                        render();
-                    } catch (error) {
-                        message(error.message, true);
-                        if (error.status === 409) body.appendChild(button('Reload Latest Session', async function () { try { showSession(await api('practice/state?id=' + current.sessionId)); } catch (err) { message(err.message, true); } }));
-                    } finally { busy = false; }
+                if (feedback && includesKey(feedback.correctAnswer, key)) klass += ' is-correct';
+                if (feedback && includesKey(feedback.yourAnswer, key) && !includesKey(feedback.correctAnswer, key)) klass += ' is-wrong';
+                var b = button(text, function () {
+                    if (multi) {
+                        if (selected.indexOf(key) !== -1) selected.splice(selected.indexOf(key), 1);
+                        else selected.push(key);
+                        b.classList.toggle('is-selected', selected.indexOf(key) !== -1);
+                    } else submitPractice(key);
                 }, klass);
                 if (feedback || current.status !== 'active') b.disabled = true;
                 form.appendChild(b);
             });
+            if (multi && !feedback && current.status === 'active') {
+                form.appendChild(button('Submit Selected Answers', function () {
+                    if (!selected.length) { message('Choose at least one answer.', true); return; }
+                    submitPractice(selected.sort().join(','));
+                }, 'smcq-practice-button'));
+            }
             card.appendChild(form);
             if (feedback) {
                 card.appendChild(el('p', feedback.status === 'correct' ? 'smcq-practice-feedback is-correct' : 'smcq-practice-feedback', (feedback.status === 'correct' ? 'Correct!' : feedback.status === 'wrong' ? 'Not quite.' : 'Skipped.') + ' Correct choice: ' + feedback.correctAnswer));

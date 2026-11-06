@@ -44,7 +44,7 @@ final class SMCQ_Questions {
 			'show_in_rest'        => false,
 			'exclude_from_search' => true,
 			'menu_icon'           => 'dashicons-welcome-learn-more',
-			'supports'            => array( 'title' ),
+			'supports'            => array( 'title', 'revisions' ),
 			'map_meta_cap'       => true,
 		) );
 
@@ -81,10 +81,18 @@ final class SMCQ_Questions {
 		wp_nonce_field( 'smcq_save_question', 'smcq_question_nonce' );
 		$options = get_post_meta( $post->ID, '_smcq_options', true );
 		$options = is_array( $options ) ? $options : array();
+		$type = SMCQ_Question_Types::type( get_post_meta( $post->ID, '_smcq_type', true ) );
 		$correct = (string) get_post_meta( $post->ID, '_smcq_correct', true );
+		$multi = get_post_meta( $post->ID, '_smcq_correct_keys', true );
+		$multi = is_array( $multi ) ? $multi : array();
 		$explanation = (string) get_post_meta( $post->ID, '_smcq_explanation', true );
 
-		echo '<p class="description">' . esc_html__( 'Enter the question in the Title field. All four options and a valid correct answer are needed before this question is ready for an exam.', 'smart-mcq-manager' ) . '</p>';
+		echo '<p><label for="smcq_type"><strong>' . esc_html__( 'Question type', 'smart-mcq-manager' ) . '</strong></label> <select id="smcq_type" name="smcq_type">';
+		foreach ( SMCQ_Question_Types::types() as $slug => $label ) {
+			printf( '<option value="%s" %s>%s</option>', esc_attr( $slug ), selected( $type, $slug, false ), esc_html( $label ) );
+		}
+		echo '</select></p>';
+		echo '<p class="description">' . esc_html__( 'True/False uses only choices A and B. Multiple-answer questions need at least two correct options. Existing questions remain Single Answer.', 'smart-mcq-manager' ) . '</p>';
 		echo '<div class="smcq-option-grid">';
 		foreach ( array( 'A', 'B', 'C', 'D' ) as $letter ) {
 			$value = isset( $options[ $letter ] ) && is_scalar( $options[ $letter ] ) ? $options[ $letter ] : '';
@@ -101,6 +109,11 @@ final class SMCQ_Questions {
 			printf( '<option value="%1$s" %2$s>%1$s</option>', esc_attr( $letter ), selected( $correct, $letter, false ) );
 		}
 		echo '</select></p>';
+		echo '<p id="smcq_multi_choices"><strong>' . esc_html__( 'Correct choices (select two or more for Multiple)', 'smart-mcq-manager' ) . '</strong> ';
+		foreach ( array( 'A', 'B', 'C', 'D' ) as $letter ) {
+			printf( '<label style="margin-right:16px"><input type="checkbox" name="smcq_correct_keys[]" value="%s" %s> %s</label>', esc_attr( $letter ), checked( in_array( $letter, $multi, true ), true, false ), esc_html( $letter ) );
+		}
+		echo '</p>';
 		echo '<p id="smcq-answer-readiness" class="description" role="status" aria-live="polite"></p>';
 		echo '<p><strong>' . esc_html__( 'Answer explanation', 'smart-mcq-manager' ) . '</strong></p>';
 		wp_editor( $explanation, 'smcq_explanation', array(
@@ -147,6 +160,10 @@ final class SMCQ_Questions {
 			<p><label for="smcq_negative_marks"><strong><?php esc_html_e( 'Negative marks', 'smart-mcq-manager' ); ?></strong></label>
 				<input id="smcq_negative_marks" type="number" step="0.01" min="0" max="1000" name="smcq_negative_marks" value="<?php echo esc_attr( $negative ); ?>" /></p>
 		</div>
+		<p><label for="smcq_passage"><strong><?php esc_html_e( 'Reading passage (passage questions)', 'smart-mcq-manager' ); ?></strong></label><textarea id="smcq_passage" class="widefat" name="smcq_passage" rows="5"><?php echo esc_textarea( (string) get_post_meta( $post->ID, '_smcq_passage', true ) ); ?></textarea></p>
+		<p><label for="smcq_media_id"><strong><?php esc_html_e( 'WordPress Media Library attachment ID (image/audio questions)', 'smart-mcq-manager' ); ?></strong></label><input type="number" min="0" id="smcq_media_id" name="smcq_media_id" value="<?php echo esc_attr( (int) get_post_meta( $post->ID, '_smcq_media_id', true ) ); ?>" /> <a href="<?php echo esc_url( admin_url( 'upload.php' ) ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Open Media Library', 'smart-mcq-manager' ); ?></a></p>
+		<p class="description"><?php esc_html_e( 'Only published WordPress media attachments matching the question type are used. Do not upload confidential questions as publicly accessible attachments.', 'smart-mcq-manager' ); ?></p>
+		<p class="description"><?php esc_html_e( 'Math questions accept Unicode and plain-text formulas. LaTeX rendering is not included yet.', 'smart-mcq-manager' ); ?></p>
 		<p class="description"><?php esc_html_e( 'Use the Subject, Topic, Exam Source and Question Tags panels to classify this question. Marking values are stored for future exam-generation steps.', 'smart-mcq-manager' ); ?></p>
 		<?php
 	}
@@ -171,11 +188,21 @@ final class SMCQ_Questions {
 		foreach ( array( 'A', 'B', 'C', 'D' ) as $letter ) {
 			$options[ $letter ] = isset( $raw[ $letter ] ) && is_scalar( $raw[ $letter ] ) ? sanitize_text_field( (string) $raw[ $letter ] ) : '';
 		}
+		$type = SMCQ_Question_Types::type( self::posted_string( 'smcq_type' ) );
+		$raw_multi = isset( $_POST['smcq_correct_keys'] ) && is_array( $_POST['smcq_correct_keys'] ) ? wp_unslash( $_POST['smcq_correct_keys'] ) : array();
+		$multi = array_values( array_intersect( array( 'A', 'B', 'C', 'D' ), array_filter( $raw_multi, 'is_string' ) ) );
+		$multi_correct = implode( ',', $multi );
 		$correct = self::posted_string( 'smcq_correct' );
 		if ( ! in_array( $correct, array( 'A', 'B', 'C', 'D' ), true ) || '' === $options[ $correct ] ) {
 			$correct = '';
 		}
 		$explanation = ( isset( $_POST['smcq_explanation'] ) && is_string( $_POST['smcq_explanation'] ) ) ? wp_kses_post( wp_unslash( $_POST['smcq_explanation'] ) ) : '';
+		update_post_meta( $post_id, '_smcq_type', $type );
+		update_post_meta( $post_id, '_smcq_correct_keys', $multi );
+		update_post_meta( $post_id, '_smcq_passage', sanitize_textarea_field( isset( $_POST['smcq_passage'] ) && is_string( $_POST['smcq_passage'] ) ? wp_unslash( $_POST['smcq_passage'] ) : '' ) );
+		$media_id = absint( self::posted_string( 'smcq_media_id' ) );
+		$media_url = SMCQ_Question_Types::media_url( $media_id, $type );
+		update_post_meta( $post_id, '_smcq_media_id', $media_url ? $media_id : 0 );
 		update_post_meta( $post_id, '_smcq_options', $options );
 		update_post_meta( $post_id, '_smcq_correct', $correct );
 		update_post_meta( $post_id, '_smcq_explanation', $explanation );
@@ -233,6 +260,7 @@ final class SMCQ_Questions {
 
 	/** Add columns to identify valid questions and their classification. */
 	public static function columns( $columns ) {
+		$columns['smcq_type']       = __( 'Type', 'smart-mcq-manager' );
 		$columns['smcq_id']         = __( 'Question ID', 'smart-mcq-manager' );
 		$columns['smcq_ready']      = __( 'Ready', 'smart-mcq-manager' );
 		$columns['smcq_correct']    = __( 'Correct', 'smart-mcq-manager' );
@@ -244,20 +272,21 @@ final class SMCQ_Questions {
 
 	public static function column_value( $column, $post_id ) {
 		switch ( $column ) {
+			case 'smcq_type':
+				echo esc_html( SMCQ_Question_Types::types()[ SMCQ_Question_Types::type( get_post_meta( $post_id, '_smcq_type', true ) ) ] );
+				break;
 			case 'smcq_id':
 				echo esc_html( 'Q-' . str_pad( (string) $post_id, 6, '0', STR_PAD_LEFT ) );
 				break;
 			case 'smcq_ready':
 				$options = get_post_meta( $post_id, '_smcq_options', true );
 				$correct = get_post_meta( $post_id, '_smcq_correct', true );
-				$ready = is_array( $options ) && in_array( $correct, array( 'A', 'B', 'C', 'D' ), true ) && '' !== trim( (string) get_the_title( $post_id ) );
-				foreach ( array( 'A', 'B', 'C', 'D' ) as $key ) {
-					$ready = $ready && isset( $options[ $key ] ) && is_string( $options[ $key ] ) && '' !== trim( $options[ $key ] );
-				}
+				$type = SMCQ_Question_Types::type( get_post_meta( $post_id, '_smcq_type', true ) );
+				$ready = '' !== trim( (string) get_the_title( $post_id ) ) && SMCQ_Question_Types::ready( $type, $options, SMCQ_Question_Types::correct_from_meta( $post_id ), (string) get_post_meta( $post_id, '_smcq_passage', true ), SMCQ_Question_Types::media_url( get_post_meta( $post_id, '_smcq_media_id', true ), $type ) );
 				echo $ready ? '<span class="smcq-ready">' . esc_html__( 'Ready', 'smart-mcq-manager' ) . '</span>' : '<span class="smcq-incomplete">' . esc_html__( 'Incomplete', 'smart-mcq-manager' ) . '</span>';
 				break;
 			case 'smcq_correct':
-				echo esc_html( get_post_meta( $post_id, '_smcq_correct', true ) ?: '—' );
+				echo esc_html( SMCQ_Question_Types::correct_from_meta( $post_id ) ?: '—' );
 				break;
 			case 'smcq_difficulty':
 				$value = get_post_meta( $post_id, '_smcq_difficulty', true ) ?: 'easy';

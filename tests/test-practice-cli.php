@@ -1,6 +1,7 @@
 <?php
 /** Pure Step 8 snapshot-selection and progressive-feedback checks; WordPress not required. */
 define( 'ABSPATH', __DIR__ . '/' );
+require_once dirname( __DIR__ ) . '/includes/class-smcq-question-types.php';
 require_once dirname( __DIR__ ) . '/includes/class-smcq-results.php';
 require_once dirname( __DIR__ ) . '/includes/class-smcq-player.php';
 require_once dirname( __DIR__ ) . '/includes/class-smcq-practice.php';

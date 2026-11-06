@@ -1,6 +1,7 @@
 <?php
 /** Pure analytics + leaderboard tests; WordPress is not required. */
 define( 'ABSPATH', __DIR__ . '/' );
+require_once dirname( __DIR__ ) . '/includes/class-smcq-question-types.php';
 require_once dirname( __DIR__ ) . '/includes/class-smcq-results.php';
 require_once dirname( __DIR__ ) . '/includes/class-smcq-analytics.php';
 function check( $expected, $actual, $message ) {

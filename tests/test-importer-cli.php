@@ -71,3 +71,19 @@ if ( class_exists( 'ZipArchive' ) && function_exists( 'simplexml_load_string' ) 
 } else {
 	echo "XLSX test skipped: PHP ZIP/SimpleXML extensions unavailable in this CLI.\n";
 }
+
+// Step 14: structured JSON import uses the same mapping and validation as CSV.
+$json_file = tempnam( sys_get_temp_dir(), 'smcq_json_' );
+file_put_contents( $json_file, json_encode( array( 'questions' => array( array( 'question' => 'বাংলা প্রশ্ন', 'option_a'=>'হ্যাঁ', 'option_b'=>'না', 'option_c'=>'সম্ভবত', 'option_d'=>'জানি না', 'correct'=>'A' ) ) ), JSON_UNESCAPED_UNICODE ) );
+$json_data = call_importer( 'parse_json', array( $json_file ) );
+unlink( $json_file );
+must( ! is_wp_error( $json_data ), 'Structured JSON import should parse.' );
+must( 'বাংলা প্রশ্ন' === $json_data['rows'][0]['cells'][0], 'Unicode JSON question lost.' );
+$json_mapping = call_importer( 'suggested_mapping', array( $json_data['headers'] ) );
+$json_row = call_importer( 'map_row', array( $json_data['rows'][0]['cells'], $json_mapping ) );
+must( ! is_wp_error( call_importer( 'validate_row', array( $json_row ) ) ), 'JSON row not valid after mapping.' );
+$json_bad = tempnam( sys_get_temp_dir(), 'smcq_bad_' );
+file_put_contents( $json_bad, '{"questions":[{"question": {"object": "invalid"}}]}' );
+must( is_wp_error( call_importer( 'parse_json', array( $json_bad ) ) ), 'Nested JSON should be rejected.' );
+unlink( $json_bad );
+echo "Structured JSON tests passed.\n";

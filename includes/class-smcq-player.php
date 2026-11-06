@@ -306,7 +306,8 @@ final class SMCQ_Player {
 				return self::error( 'smcq_incomplete_exam', __( 'The exam contains an unavailable or incomplete question. Contact an administrator.', 'smart-mcq-manager' ) );
 			}
 			$raw_options = get_post_meta( $id, '_smcq_options', true );
-			$order = array( 'A', 'B', 'C', 'D' );
+			$type = SMCQ_Question_Types::type( get_post_meta( $id, '_smcq_type', true ) );
+			$order = SMCQ_Question_Types::keys( $type );
 			if ( $config['shuffle_options'] ) {
 				shuffle( $order );
 			}
@@ -317,7 +318,10 @@ final class SMCQ_Player {
 				'title' => wp_strip_all_tags( get_the_title( $id ), true ),
 				'options' => array_map( 'strval', $raw_options ),
 				'order' => $order,
-				'correct' => (string) get_post_meta( $id, '_smcq_correct', true ),
+				'correct' => SMCQ_Question_Types::correct_from_meta( $id ),
+				'type' => $type,
+				'passage' => 'passage' === $type ? wp_strip_all_tags( (string) get_post_meta( $id, '_smcq_passage', true ), true ) : '',
+				'media' => SMCQ_Question_Types::media_url( get_post_meta( $id, '_smcq_media_id', true ), $type ),
 				'points' => '' === $points ? 1.0 : (float) $points,
 				'negative' => '' === $negative ? 0.0 : (float) $negative,
 				'explanation' => wp_strip_all_tags( (string) get_post_meta( $id, '_smcq_explanation', true ), true ),
@@ -343,7 +347,7 @@ final class SMCQ_Player {
 			foreach ( $question['order'] as $index => $key ) {
 				$options[] = array( 'key' => $key, 'label' => chr( 65 + $index ), 'text' => $question['options'][ $key ] );
 			}
-			$public[] = array( 'id' => (int) $question['id'], 'title' => $question['title'], 'options' => $options );
+			$public[] = array( 'id' => (int) $question['id'], 'title' => $question['title'], 'type' => SMCQ_Question_Types::type( isset( $question['type'] ) ? $question['type'] : 'single' ), 'passage' => isset( $question['passage'] ) ? $question['passage'] : '', 'media' => isset( $question['media'] ) ? $question['media'] : '', 'options' => $options );
 		}
 		return $public;
 	}
@@ -355,7 +359,7 @@ final class SMCQ_Player {
 		}
 		foreach ( $snapshot['questions'] as $question ) {
 			if ( (int) $question['id'] === $question_id ) {
-				return null === $choice || array_key_exists( $choice, $question['options'] );
+				return null === $choice || null !== SMCQ_Question_Types::canonical( $choice, SMCQ_Question_Types::type( isset( $question['type'] ) ? $question['type'] : 'single' ), $question['options'] );
 			}
 		}
 		return false;

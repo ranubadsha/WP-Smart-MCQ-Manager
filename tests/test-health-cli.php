@@ -57,5 +57,5 @@ ensure( strpos( $player, "SCHEMA_VERSION = '3'" ) !== false, 'attempt migration 
 ensure( strpos( $practice, "SCHEMA = '2'" ) !== false, 'practice migration version' );
 foreach ( array( 'user_status_id', 'exam_status_id', 'status_id', 'status_deadline' ) as $key ) { ensure( strpos( $player, 'KEY ' . $key . ' (' ) !== false, 'attempt index ' . $key ); }
 ensure( strpos( $practice, 'KEY user_status_id (user_id,status,id)' ) !== false, 'practice index' );
-ensure( strpos( file_get_contents( __DIR__ . '/../smart-mcq-manager.php' ), 'Version: 1.2.0' ) !== false, 'plugin release version' );
+ensure( strpos( file_get_contents( __DIR__ . '/../smart-mcq-manager.php' ), 'Version: 1.3.0' ) !== false, 'plugin release version' );
 echo "Step 12 diagnostics and schema tests passed.\n";

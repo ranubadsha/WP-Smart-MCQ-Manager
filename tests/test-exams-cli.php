@@ -2,6 +2,7 @@
 /** Minimal PHP-only regression tests for Step 4 exam selection and validation. */
 
 define( 'ABSPATH', __DIR__ . '/' );
+require_once dirname( __DIR__ ) . '/includes/class-smcq-question-types.php';
 $posts = array(
 	101 => (object) array( 'ID' => 101, 'post_type' => 'smcq_question', 'post_status' => 'publish', 'post_title' => 'বাংলাদেশের রাজধানী?' ),
 	102 => (object) array( 'ID' => 102, 'post_type' => 'smcq_question', 'post_status' => 'publish', 'post_title' => 'English grammar' ),
