@@ -42,7 +42,7 @@ final class SMCQ_Analytics {
 			'nonce' => wp_create_nonce( 'wp_rest' ),
 			'error' => __( 'Unable to load your dashboard. Refresh and try again.', 'smart-mcq-manager' ),
 		) );
-		return '<section class="smcq-dashboard" aria-label="' . esc_attr__( 'My MCQ performance', 'smart-mcq-manager' ) . '"><h2>' . esc_html__( 'My MCQ Performance', 'smart-mcq-manager' ) . '</h2><div class="smcq-dashboard-content" aria-live="polite">' . esc_html__( 'Loading your progress…', 'smart-mcq-manager' ) . '</div></section>';
+		return SMCQ_Reports::personal_links() . '<section class="smcq-dashboard" aria-label="' . esc_attr__( 'My MCQ performance', 'smart-mcq-manager' ) . '"><h2>' . esc_html__( 'My MCQ Performance', 'smart-mcq-manager' ) . '</h2><div class="smcq-dashboard-content" aria-live="polite">' . esc_html__( 'Loading your progress…', 'smart-mcq-manager' ) . '</div></section>';
 	}
 
 	/** No answer key is ever returned to the browser from this endpoint. */
@@ -230,7 +230,7 @@ final class SMCQ_Analytics {
 	public static function admin_menu() {
 		add_submenu_page(
 			'edit.php?post_type=smcq_question', __( 'Exam Reports', 'smart-mcq-manager' ),
-			__( 'Exam Reports', 'smart-mcq-manager' ), 'manage_options', 'smcq-exam-reports', array( __CLASS__, 'admin_page' )
+			__( 'Exam Reports', 'smart-mcq-manager' ), 'manage_options', 'smcq-exam-reports', array( 'SMCQ_Reports', 'admin_page' )
 		);
 	}
 

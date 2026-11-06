@@ -1,4 +1,4 @@
-name: PHP Lint, Import, Exam, Grading, Analytics and Practice Tests
+name: PHP Lint, Import, Exam, Grading, Analytics, Practice and Reports Tests
 on:
   push:
   pull_request:
@@ -28,6 +28,8 @@ jobs:
         run: php tests/test-analytics-cli.php
       - name: Smart practice helper tests
         run: php tests/test-practice-cli.php
+      - name: Step 9 report and export tests
+        run: php tests/test-reports-cli.php
       - name: Practice JavaScript syntax
         run: node --check assets/practice.js
       - name: Analytics JavaScript syntax

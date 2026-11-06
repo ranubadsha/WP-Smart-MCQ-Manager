@@ -2,10 +2,10 @@
 Contributors: smart-mcq
 Requires at least: 6.0
 Requires PHP: 7.4
-Stable tag: 0.8.0
+Stable tag: 0.9.0
 License: GPLv2 or later
 
-Step 8: WordPress MCQ question bank, import, exam builder/player, grading, analytics, and personal revision practice.
+Step 9: WordPress MCQ question bank, import, exam builder/player, grading, analytics, practice, and private result reporting.
 
 == Features ==
 * Private MCQ question bank with answer explanations, subjects, topics, sources, years and difficulty.
@@ -20,16 +20,21 @@ Step 8: WordPress MCQ question bank, import, exam builder/player, grading, analy
 * Private session resume, bookmark saving and practice progress history.
 * REST nonce and per-user data isolation, privacy export and erasure support.
 
+* Step 9: Admin exam reports with date/student/pass filters, sampled analytics, CSV/Excel export and Print/Save as PDF.
+* Student self-service CSV/Excel/print exports limited to the signed-in user.
+* XLSX export requires PHP ZIP; printable HTML works with browser Save as PDF.
+
 == Shortcodes ==
 [smcq_exam id="123"] — student exam.
 [smcq_history] — private attempt history and grading details.
-[smcq_dashboard] — private performance overview.
+[smcq_dashboard] — private performance overview and report download links.
+[smcq_my_report] — private student exports.
 [smcq_practice] — private bookmark/revision practice.
 [smcq_leaderboard id="123"] — anonymous rankings after closing time (requires opt-in).
 
 == Installation ==
 1. Back up your existing site and use a staging site first.
-2. WordPress Plugins > Add New > Upload Plugin: smart-mcq-manager-step8-v0.8.0.zip.
+2. WordPress Plugins > Add New > Upload Plugin: smart-mcq-manager-step9-v0.9.0.zip.
 3. Choose Replace current with uploaded. Do not uninstall the old plugin first.
 4. Enable practice availability on safe published questions (single edit or question-list bulk action).
 5. Create a WordPress page with [smcq_practice] and complete a new exam as a test student.
@@ -38,6 +43,11 @@ Step 8: WordPress MCQ question bank, import, exam builder/player, grading, analy
 8. Exclude all MCQ shortcode pages and the smcq REST endpoints from page caching.
 
 == Upgrade Notes ==
+= 0.9.0 =
+* Adds private, filtered administrator reporting and 5,000-row export cap.
+* Adds safe CSV, Unicode XLSX (PHP ZIP required), and browser print-to-PDF.
+* Adds student-scoped self-service results downloads; retains all previous data.
+
 = 0.8.0 =
 * Adds per-user bookmark and practice-session database tables.
 * Adds opt-in question release, answer-by-answer practice feedback and personal revision history.
