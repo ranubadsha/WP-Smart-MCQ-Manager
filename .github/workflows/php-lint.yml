@@ -1,4 +1,4 @@
-name: PHP Lint and Smart MCQ Security Tests
+name: PHP Lint and Smart MCQ Monetization Tests
 on:
   push:
   pull_request:
@@ -38,3 +38,5 @@ jobs:
         run: node --check assets/analytics.js
       - name: Frontend JavaScript syntax
         run: node --check assets/player.js
+      - name: Step 11 premium exam access tests
+        run: php tests/test-commerce-cli.php

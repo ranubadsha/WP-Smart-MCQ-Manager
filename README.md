@@ -1,80 +1,65 @@
-# Smart MCQ Manager — Step 10 (v1.0.0)
+# Smart MCQ Manager — Step 11 (v1.1.0)
 
-A WordPress MCQ plugin with a private question bank, CSV/XLSX import, exam builder, logged-in exam delivery, frozen server-side grading, dashboards, revision practice, and exports. **Step 10 introduces optional per-exam activity monitoring, single-tab editing controls, a private security event report, and privacy controls.**
+WordPress MCQ question bank and examination plugin with WooCommerce-based premium access. This is an upgrade from v1.0.0; **existing questions, exam definitions, student answers, results, practice sessions and reports remain in place**.
 
-> Development release. **Use a staging site and back up the WordPress database before upgrading.** CLI tests do not replace WordPress integration, security penetration testing, or load tests.
+## New in Step 11: paid exams, bundles and subscriptions
 
-## Requirements
+- Configure each **Exam** as **Free** (default) or **Premium** from the **Premium Access & WooCommerce** meta box.
+- Assign one or more **published WooCommerce product IDs** to a premium exam. Purchasing **any one** of these products grants access. Use **the same product ID on multiple exams** to sell a multi-exam package.
+- Optional **access duration in days** per exam. `0` grants indefinite access while the purchase remains valid. A new qualifying purchase renews access from the newer payment date.
+- Purchases are verified **server-side** using WooCommerce order APIs, compatible with High-Performance Order Storage (HPOS). Only orders with status **Processing** or **Completed**, attached to the current logged-in WordPress account, count. **Pending, On Hold, Cancelled and Refunded** orders do not count. Fully refunded order line items do not count even if the order remains Completed.
+- Optional compatibility with the **official WooCommerce Subscriptions extension**: a subscription-type product only grants access while `wcs_user_has_subscription()` reports an **active** subscription. Cancelled or expired subscriptions cannot grant access via an earlier paid order. **Recurring billing and subscription plans are not provided by this plugin**; they require the WooCommerce Subscriptions extension or another compatible product.
+- The `[smcq_exam id="123"]` shortcode displays product purchase links for an authenticated student without access. Students must be logged in to participate.
+- Exam **state**, **start**, **answer**, and **submit** REST routes all re-check entitlement. Previously completed results/history remain available only to their original owner, including if access was later revoked.
+- **No card details, payment tokens, payment records, gateway code or billing information** are stored by Smart MCQ Manager. WooCommerce handles the checkout, receipts, refunds, payment providers, orders and coupon usage.
+- WooCommerce is an **optional dependency**: the plugin and free exams work without it; premium exams fail closed if WooCommerce is missing/inactive or product IDs are invalid.
 
-- WordPress 6.0+, PHP 7.4+ and HTTPS.
-- Existing imports require the PHP ZIP and SimpleXML extensions for Excel; Excel exports require ZIP.
-- Exclude exam pages and authenticated REST endpoints (`/wp-json/smcq/v1/`) from CDN/page caches.
-- Use a working WordPress scheduler. WP-Cron runs opportunistically; site owners requiring reliable 30-day log cleanup should configure real server cron.
+### Set up your first paid exam
 
-## Step 10: Exam Security and Anti-Cheating
+1. Install and configure **WooCommerce**, including a supported payment gateway. In WooCommerce settings, require customers to log in or create an account for checkout. **Guest orders are intentionally not recognized for exam access**, even if the email address matches.
+2. Create a **published simple, virtual WooCommerce product** (e.g. `BCS English Model Test`). Enter its price; note its product ID. For an exam package (e.g. `5 BCS Model Tests`), create one product and add that **same product ID** to the five exams.
+3. Open **Smart MCQ → Exams → Edit Exam → Premium Access & WooCommerce**, choose **Premium**, enter one or more product IDs and set **Access validity (days)**. Save/Update the exam. Premium + no valid product IDs **remains locked**; it does not silently turn into a free exam.
+4. Place `[smcq_exam id="123"]` on a WordPress page (replace `123` with the exam ID). Exclude it and all user-specific routes from full-page/CDN caching.
+5. In a **staging** site, create two test accounts. Confirm an unpaid student sees the purchase message and **cannot start an attempt via a direct REST call**. Buy the product using the buyer account and confirm access works; test expiry, refunds, paid order status, and order ownership.
+6. If testing subscriptions, use WooCommerce Subscriptions to sell an actual subscription-type product; confirm active access and that expiry/cancellation removes access.
 
-### Enable for individual exams
+### Admin notes & limitations
 
-1. Open **Smart MCQ → Exams → Edit Exam → Examination Settings**.
-2. Under **Exam Security (optional)**, choose either or both of:
-   - **Log activity:** records browser tab hidden/visible, exits from fullscreen entered through the exam page, session conflicts/takeovers, and starts/submissions/timeouts. Disabled by default. Logs have no IP address, raw browser token or user-agent.
-   - **Single-tab editing:** only one editing session is allowed per student attempt. Other tabs/devices receive a conflict message and an explicit **Continue this attempt here** button; takeover revokes the previous session's ability to save. Disabled by default. If the previous tab is abandoned, a replacement session can reclaim the lease after **180 seconds**; an active tab sends a lightweight heartbeat every 45 seconds. Tokens are generated with browser cryptographic randomness and stored only in the tab's session storage; the database retains a salted hash. Single-tab controls are best-effort—not identity verification or robust anti-cheating.
-3. Save the exam. **New policy settings apply to active attempts when they next contact the server**; notify students before enabling mid-exam.
-4. Test the exam in a normal browser, second tab, private window, and phone. Some browsers copy sessionStorage into duplicated tabs; the control cannot guarantee one physical device.
+- The existing exam duration, attempt limit, exam schedule, randomization, grading and security-monitoring settings continue to apply. Premium access is *in addition to* those rules.
+- Purchase access is tied to the **WooCommerce order customer ID** (WordPress user ID). An order completed as a guest, even with a matching email, does not grant access. Migrate guest orders to registered customers through approved WooCommerce administration before access can be recognized.
+- One product can represent multiple exams; this is a **bundle** through the exam access mapping, not a separate inventory or WooCommerce bundle-product integration.
+- `Days` are calculated in UTC as 24-hour periods from WooCommerce's paid date (or completion date for manually completed orders without a paid date). All qualifying orders remain checked directly, so refund and access revocation takes effect without a custom synchronization job.
+- For safety, order lookup searches the **latest 2,000 paid orders per customer** (40 pages × 50) and fails closed if an eligible purchase is older. At large scale, replace this bounded query with a WooCommerce-synchronized, indexed entitlement ledger. This release does **not** claim to support enterprise volumes.
+- Paid access is implemented for **published WooCommerce products**. The supported setup is simple/virtual products and active WooCommerce Subscriptions products; variation handling, composite products, partial monetary refunds without quantity refunds, gateway-specific subscription plugins, multi-site sharing, and checkout customization are **not guaranteed**.
+- For an active attempt, an expired/refunded purchase disables further answer and submit requests. The server can still finalize a timed-out attempt when it is next accessed. Completed result and review endpoints remain owner-restricted.
+- WooCommerce and the optional subscription extension must be maintained separately. **No built-in payment gateway and no direct bKash/Nagad integration** are included; use a compatible WooCommerce payment plugin.
+- CLI unit tests exercise the WooCommerce access policy with mocks, **not live payment processing or full WordPress/WooCommerce integration**. Always stage-test checkout/HPOS and cancellation/refunds before launching paid exams.
 
-### Security events and private exports
-
-Open **Smart MCQ → Exam Security** as an administrator (`manage_options`). Filter by exam ID, WordPress user ID, and event type. Reports display at most 25 events/page and you may export up to 5,000 events as UTF-8 CSV. Both report and export are administrator-only; export requires a nonce. No security log includes answer keys or question text.
-
-**Privacy and fairness:** Visibility events are indicators for review, **not proof of cheating**. They never automatically penalize, disqualify, or alter results. Users should be informed before participating in monitored exams. WordPress privacy export/erase includes security events and leases. Automatic cleanup is scheduled daily for events older than 30 days; delays are possible when WP-Cron does not execute. Events are capped at 200 per attempt and the same event type is throttled to once every 5 seconds. Session leases are also cleared on successful submission and during stale-data cleanup.
-
-### Existing protections retained
-
-- Exam timer and submission deadlines are server-enforced.
-- Only the logged-in attempt owner may fetch or change their attempt.
-- Correct-answer keys and explanations are not sent to the frontend before a valid submission.
-- Optimistic answer-version checks prevent overlapping writes and the `active_key` UNIQUE constraint prevents duplicate concurrent attempts for a single exam/student.
-- Question and option randomization are already available in exam settings. All questions, marks and categories are frozen at attempt creation.
-
-### Important limits
-
-Browser activity signals are imperfect: tab changes may be triggered by accessibility software, device notifications, or connection events and can be suppressed by the browser. Monitoring cannot detect another device or prove that a student cheated. Single-tab restrictions are not a substitute for strong user authentication, offline proctoring, or formal examination supervision. Timeouts are still lazily finalized when the server next accesses the attempt. This is **not** yet a verified high-stakes examination platform.
-
-## Installation
-
-1. Back up your WordPress database and existing plugin. Test in staging.
-2. In WordPress **Plugins → Add New Plugin → Upload Plugin**, upload `smart-mcq-manager-step10-v1.0.0.zip` and select **Replace current with uploaded**. Do **not** uninstall or delete data.
-3. Edit one test exam and enable monitoring + single-tab editing. Publish it, create a page with `[smcq_exam id="123"]` (use your exam ID), and complete an attempt as a student.
-4. Verify that opening a second tab triggers a friendly conflict and **Continue this attempt here**. Confirm the first tab can no longer save once another session takes over. Test countdown, answer autosave, timeout and submission.
-5. Open **Smart MCQ → Exam Security** as an administrator. Check the event timeline and CSV export. Confirm anonymous visitors and students cannot access admin reports.
-6. Confirm the student sees the monitoring notice before starting. If using a managed cache, explicitly exclude the exam and student pages.
-
-### Student shortcodes
+### Existing shortcodes
 
 ```text
-[smcq_exam id="123"]          Authenticated MCQ examination
-[smcq_history]                Personal attempt history and answer review
-[smcq_dashboard]              Personal analytics and result exports
-[smcq_my_report]              Personal reports
-[smcq_practice]               Wrong-answer, bookmark and weak-topic revision
-[smcq_leaderboard id="123"]   Optional anonymous leaderboard after closing
+[smcq_exam id="123"]          Free or premium exam player and paywall
+[smcq_history]                Personal exam history
+[smcq_dashboard]              Personal performance dashboard
+[smcq_my_report]              Personal report exports
+[smcq_practice]               Smart revision
+[smcq_leaderboard id="123"]   Opt-in anonymous leaderboard after closing
 ```
 
-## Automated tests
+### Developer smoke tests
 
 ```bash
 find . -name '*.php' -print0 | xargs -0 -n1 php -l
-for test in tests/test-*-cli.php; do php "$test"; done
-for js in assets/*.js; do node --check "$js"; done
+for f in tests/test-*-cli.php; do php "$f"; done
+for f in assets/*.js; do node --check "$f"; done
 ```
 
-The new Step 10 tests exercise allowed event names, strict client identifiers, lease decisions, expiration and takeover. The existing import, exam builder, player, grading, analytics, practice and reporting suites still pass. Full live REST/database/JS/browser integration testing is not simulated by these CLI tests.
+The Step 11 suite covers product-ID validation, duration boundaries, paid/refunded/on-hold orders, ownership, missing configurations, shared package products, and subscription status. Existing tests are retained.
 
-## Upgrade/data notes
+### Upgrade & data retention
 
-- Version `1.0.0` keeps the existing WordPress plugin name, post types, answers, attempts, grading and practice data.
-- Creates two new WordPress-prefixed tables: `smcq_security_events`, `smcq_security_leases` (no destructive migration).
-- Adds two exam settings: `_smcq_exam_monitor_activity`, `_smcq_exam_single_tab` (both default off).
-- A daily WordPress cleanup hook removes old security events. The plugin does not uninstall older student data on upgrade.
+- Upgrade **over the current plugin** via the WordPress upload replacement workflow; back up your database first. Do not delete the plugin and its data to update.
+- This version adds exam post metadata (`_smcq_exam_access`, `_smcq_exam_products`, `_smcq_exam_access_days`) and no new database tables. All previously created exams default to **Free**.
+- WooCommerce stores payments and order data. WordPress/WooCommerce privacy retention policies continue to apply; Smart MCQ does not copy billing details.
 
 GPL-2.0-or-later.

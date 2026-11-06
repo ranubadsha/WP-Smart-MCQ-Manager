@@ -2,44 +2,50 @@
 Contributors: smart-mcq
 Requires at least: 6.0
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 
-WordPress MCQ examinations, question imports, marking, results, analytics, practice and export. Step 10 adds opt-in security activity logging, session leases and admin reports.
+Private MCQ question bank, bulk import, exams, student player, grading, dashboards, practice, reports, security and optional WooCommerce premium access.
 
-== Description ==
+== New in 1.1.0 (Step 11) ==
+- Free or premium exam access configured per exam.
+- One or more WooCommerce product IDs unlock each exam; a product can unlock multiple exams (packages).
+- Time-limited access in days, optional lifetime pass.
+- Live paid-order / account ownership / refund verification, HPOS-friendly WooCommerce CRUD.
+- Optional WooCommerce Subscriptions: active official subscriptions only.
+- Premium shortcode paywall and server-side REST admission checks.
+- No direct payment processing or storage of payment details.
 
-Features:
-- Private question bank (Bangla and English), subjects, topics, difficulty
-- Import questions from CSV/XLSX with validation
-- Exam builder, schedules, positive/negative marks, attempt limits
-- Authenticated online exam with server timer, autosave and frozen grading
-- Student results, answer reviews, dashboard, revision practice and reports
-- Optional anonymous post-exam leaderboard
-- Private CSV/XLSX exports and print/save as PDF
-- Step 10: per-exam optional tab visibility / fullscreen-exit activity events
-- Step 10: optional single-tab editing session and explicit takeover
-- Step 10: administrator event logs, filters, CSV export, privacy exporter/eraser
+== Requirements ==
+WordPress 6.0+, PHP 7.4+.
+WooCommerce is OPTIONAL for free exams, REQUIRED for premium exams.
+For recurring subscription payments, also install and configure WooCommerce Subscriptions.
 
 == Installation ==
+1. Back up the database and test on a staging site.
+2. Install v1.1.0 by replacing the current Smart MCQ Manager plugin ZIP (do not delete old data).
+3. Configure WooCommerce checkout with registered customers (guest orders do not qualify).
+4. Create published simple/virtual products in WooCommerce.
+5. In Smart MCQ -> Exams, open an exam and set Premium Access & WooCommerce options.
+6. Publish the exam and use [smcq_exam id="123"] on a page.
+7. Test paid/unpaid/refunded scenarios with separate student accounts.
 
-1. Back up the database. Upload the v1.0.0 ZIP via Plugins > Add New > Upload Plugin.
-2. Select Replace current with uploaded and do not uninstall the prior version.
-3. Edit an exam under Smart MCQ > Exams. Enable new Exam Security settings if desired.
-4. Add [smcq_exam id="123"] to a page, using your exam's actual ID.
-5. Open Smart MCQ > Exam Security for an administrator-only audit log.
+== Shortcodes ==
+[smcq_exam id="123"]
+[smcq_history]
+[smcq_dashboard]
+[smcq_my_report]
+[smcq_practice]
+[smcq_leaderboard id="123"]
 
-== Privacy and limitations ==
+== Security ==
+Premium access is checked by server-side order data, not client flags. Order status must be Processing or Completed, bound to the current logged-in customer and not fully quantity-refunded. Cancelled, refunded, unpaid and expired subscriptions are denied. Completed results remain visible only to the student who submitted them. Page caching must exclude private exam pages.
 
-Monitoring and single-tab editing are OFF by default. Browsers may fail to report some events; they are not proof of misconduct. No automatic penalties. Activity logs omit IP addresses, user agent and raw session token. 30-day cleanup relies on WordPress scheduling. Test on staging before production use.
+== Known limitations ==
+Native checkout, monthly billing and payment gateways are provided by WooCommerce and its extensions, not this plugin. Access searches the latest 2,000 paid orders for a customer; a qualifying older purchase can fail closed. Native subscriptions require WooCommerce Subscriptions. Partial amount-only refunds may need manual access management. No live WordPress/WooCommerce integration test has been run.
 
 == Changelog ==
-
+= 1.1.0 =
+Step 11: WooCommerce products, paid exam eligibility, packages, duration, subscription checks, refund/ownership enforcement.
 = 1.0.0 =
-- Step 10: Optional exam security monitoring and tab/device editing lease.
-- Separate privacy-conscious event records, admin event report and CSV.
-- Session takeover UX, activity monitoring notice, fullscreen shortcut.
-- Security test suite; preserves prior features and data.
-
-= 0.9.0 =
-- Step 9 reports, private result exports, Excel and print-to-PDF.
+Step 10: optional security events, single active editing session and admin security report.

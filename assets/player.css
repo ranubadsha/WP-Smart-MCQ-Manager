@@ -52,3 +52,10 @@
 /* Step 10: clear notice when an exam records browser visibility signals. */
 .smcq-security-notice {border-inline-start:4px solid #946b19;background:#fff8e2;color:#49350d;padding:10px 13px;line-height:1.5;margin:10px 0;}
 .smcq-player-header .smcq-fullscreen {margin-inline-start:auto;}
+
+/* Step 11: premium exam purchase prompt (no payment inputs). */
+.smcq-paywall { max-width: 740px; margin: 1.5rem auto; padding: 1.5rem; border-radius: 12px; border: 1px solid #d5deea; background: #f7fafc; color: #172338; }
+.smcq-paywall h3 { margin-top: 0; }
+.smcq-paywall ul { padding-left: 1.4rem; }
+.smcq-paywall li { margin: .6rem 0; }
+.smcq-paywall a { font-weight: 700; }

@@ -103,6 +103,9 @@ final class SMCQ_Player {
 		if ( ! is_user_logged_in() ) {
 			return '<p>' . esc_html__( 'Please log in to start this examination.', 'smart-mcq-manager' ) . ' <a href="' . esc_url( wp_login_url( get_permalink() ) ) . '">' . esc_html__( 'Log in', 'smart-mcq-manager' ) . '</a></p>';
 		}
+		if ( ! SMCQ_Commerce::allowed( $exam_id, get_current_user_id() ) ) {
+			return SMCQ_Commerce::paywall( $exam_id );
+		}
 		self::assets();
 		return '<section class="smcq-player" data-exam-id="' . esc_attr( $exam_id ) . '" aria-label="' . esc_attr__( 'Online examination', 'smart-mcq-manager' ) . '"><div class="smcq-player-status" role="status" aria-live="polite">' . esc_html__( 'Loading examination…', 'smart-mcq-manager' ) . '</div><div class="smcq-player-body"></div></section>';
 	}
@@ -383,6 +386,8 @@ final class SMCQ_Player {
 			return self::error( 'smcq_unavailable', __( 'This exam is unavailable.', 'smart-mcq-manager' ), 404 );
 		}
 		$user = get_current_user_id();
+		$purchase = SMCQ_Commerce::check( $exam_id, $user );
+		if ( is_wp_error( $purchase ) ) { return $purchase; }
 		$row = self::active_attempt( $exam_id, $user );
 		if ( $row ) {
 			$row = self::finalize_if_due( $row );
@@ -416,6 +421,8 @@ final class SMCQ_Player {
 		if ( ! self::available_exam( $exam_id ) ) {
 			return self::error( 'smcq_unavailable', __( 'This exam is unavailable.', 'smart-mcq-manager' ), 404 );
 		}
+		$purchase = SMCQ_Commerce::check( $exam_id, $user );
+		if ( is_wp_error( $purchase ) ) { return $purchase; }
 		$now = self::utc_now();
 		$config = self::config( $exam_id );
 		$allowed = self::check_window( $config, $now );
@@ -488,6 +495,8 @@ final class SMCQ_Player {
 		if ( 'active' !== $row['status'] ) {
 			return self::error( 'smcq_already_finished', __( 'This attempt is already finished.', 'smart-mcq-manager' ), 409 );
 		}
+		$purchase = SMCQ_Commerce::check( (int) $row['exam_id'], $user );
+		if ( is_wp_error( $purchase ) ) { return $purchase; }
 		$guard = SMCQ_Security::authorize( $row, $request );
 		if ( is_wp_error( $guard ) ) { return $guard; }
 		$question_id = $request->get_param( 'questionId' );
@@ -525,6 +534,10 @@ final class SMCQ_Player {
 		$row = self::load_attempt( $attempt_id, $user );
 		if ( ! $row ) {
 			return self::error( 'smcq_no_attempt', __( 'Attempt not found.', 'smart-mcq-manager' ), 404 );
+		}
+		if ( 'active' === $row['status'] ) {
+			$purchase = SMCQ_Commerce::check( (int) $row['exam_id'], $user );
+			if ( is_wp_error( $purchase ) ) { return $purchase; }
 		}
 		if ( 'active' === $row['status'] ) {
 			$guard = SMCQ_Security::authorize( $row, $request );
