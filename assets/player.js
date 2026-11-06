@@ -1,4 +1,4 @@
-/* Smart MCQ Step 5. Answers never contain correct-answer keys or scoring data. */
+/* Smart MCQ Step 6. Answer keys are fetched only after an authenticated submission. */
 (function () {
     'use strict';
     if (!window.smcqPlayerSettings) return;
@@ -84,6 +84,11 @@
             if (state.instructions) body.appendChild(create('p', 'smcq-exam-instructions', state.instructions));
             if (state.message) body.appendChild(create('p', 'smcq-note', state.message));
             body.appendChild(create('p', 'smcq-meta', 'Duration: ' + state.duration + ' min · Attempts: ' + state.attemptsUsed + (state.attemptLimit ? ' / ' + state.attemptLimit : ' (unlimited)')));
+            if (state.lastAttemptId) {
+                body.appendChild(makeButton('View Latest Result', 'smcq-button smcq-result-link', function () {
+                    viewResult(state.lastAttemptId);
+                }));
+            }
             if (state.canStart) {
                 body.appendChild(makeButton('Start Examination', 'smcq-button smcq-primary', async function () {
                     if (busy) return;
@@ -211,21 +216,147 @@
             } catch (error) { message(error.message, true); }
             finally { busy = false; }
         }
+        function gradeCard(result) {
+            var container = create('div', 'smcq-result');
+            if (!result || !result.grade) {
+                container.appendChild(create('p', 'smcq-error', 'This result is temporarily unavailable. Please reload.'));
+                return container;
+            }
+            var grade = result.grade;
+            container.appendChild(create('h2', 'smcq-exam-title', result.examTitle || 'Exam Result'));
+            container.appendChild(create('div', 'smcq-result-status ' + (grade.passed ? 'smcq-pass' : 'smcq-fail'),
+                (grade.passed ? 'PASSED' : 'NOT PASSED') + ' · ' + grade.score + ' / ' + grade.maxMarks + ' marks'));
+            var summary = create('dl', 'smcq-result-grid');
+            [
+                ['Score percentage', grade.percentage + '%'],
+                ['Passing percentage', grade.passingPercentage + '%'],
+                ['Correct answers', grade.correct],
+                ['Wrong answers', grade.wrong],
+                ['Unanswered', grade.unanswered],
+                ['Accuracy (of attempted)', grade.accuracy + '%'],
+                ['Positive marks', grade.positiveMarks],
+                ['Negative deduction', '−' + grade.negativeMarks],
+                ['Completion', result.completionReason === 'timeout' ? 'Time expired' : 'Submitted']
+            ].forEach(function (entry) {
+                summary.appendChild(create('dt', '', entry[0]));
+                summary.appendChild(create('dd', '', entry[1]));
+            });
+            container.appendChild(summary);
+            if (result.review && result.review.length) {
+                container.appendChild(create('h3', '', 'Detailed Answer Review'));
+                result.review.forEach(function (item, idx) {
+                    var details = create('details', 'smcq-review smcq-review-' + item.status);
+                    var heading = create('summary', '', 'Q' + (idx + 1) + ': ' + item.title + ' — ' + item.status + ' (' + item.earnedMarks + ' marks)');
+                    details.appendChild(heading);
+                    var list = create('ol', 'smcq-review-options');
+                    item.options.forEach(function (option) {
+                        var li = create('li', 'smcq-review-option' + (option.key === item.correctAnswer ? ' is-correct' : '') + (option.key === item.yourAnswer && option.key !== item.correctAnswer ? ' is-wrong' : ''),
+                            option.label + '. ' + option.text + (option.key === item.correctAnswer ? ' ✓ Correct' : '') + (option.key === item.yourAnswer ? ' · Your answer' : ''));
+                        list.appendChild(li);
+                    });
+                    details.appendChild(list);
+                    if (!item.yourAnswer) details.appendChild(create('p', '', 'You did not answer this question.'));
+                    if (item.explanation) details.appendChild(create('p', 'smcq-explanation', 'Explanation: ' + item.explanation));
+                    container.appendChild(details);
+                });
+            }
+            return container;
+        }
+        async function viewResult(attemptId) {
+            ended = true;
+            active = null;
+            stopTimer();
+            clearBody();
+            message('Loading result…');
+            try {
+                showFinished(await request('attempts/' + attemptId + '/result'));
+            } catch (error) {
+                message(error.message, true);
+                body.appendChild(makeButton('Back to Exam', 'smcq-button', load));
+            }
+        }
         function showFinished(result) {
             ended = true;
             active = null;
             unsaved = false;
             stopTimer();
             clearBody();
-            body.appendChild(create('h2', '', 'Examination submitted'));
-            var text = result.completionReason === 'timeout' ? settings.messages.expired : settings.messages.finished;
-            body.appendChild(create('p', 'smcq-note', text));
+            if (result && result.grade) {
+                body.appendChild(gradeCard(result));
+                message(result.completionReason === 'timeout' ? settings.messages.expired : settings.messages.finished);
+            } else {
+                body.appendChild(create('h2', '', 'Examination submitted'));
+                body.appendChild(create('p', 'smcq-note', 'Your attempt was recorded.'));
+                if (result && result.attemptId) {
+                    body.appendChild(makeButton('Load Result', 'smcq-button', function () { viewResult(result.attemptId); }));
+                }
+                message('Attempt recorded.');
+            }
             body.appendChild(makeButton('Back to Exam', 'smcq-button', load));
-            message('Attempt recorded.');
         }
         window.addEventListener('beforeunload', function (event) {
             if (unsaved) { event.preventDefault(); event.returnValue = settings.messages.unsaved; }
         });
         load();
+    });
+
+    document.querySelectorAll('.smcq-history').forEach(function (root) {
+        var body = root.querySelector('.smcq-history-body');
+        var page = 1;
+        function clear() { while (body.firstChild) body.removeChild(body.firstChild); }
+        function resultDetails(result) {
+            var g = result.grade;
+            clear();
+            body.appendChild(create('h3', '', result.examTitle || 'Exam Result'));
+            body.appendChild(create('p', g.passed ? 'smcq-pass smcq-history-summary' : 'smcq-fail smcq-history-summary',
+                (g.passed ? 'PASSED' : 'NOT PASSED') + ' — ' + g.score + '/' + g.maxMarks + ' marks (' + g.percentage + '%)'));
+            body.appendChild(create('p', '', 'Correct: ' + g.correct + ' · Wrong: ' + g.wrong + ' · Unanswered: ' + g.unanswered + ' · Accuracy: ' + g.accuracy + '%'));
+            (result.review || []).forEach(function (item, i) {
+                var box = create('details', 'smcq-review smcq-review-' + item.status);
+                box.appendChild(create('summary', '', (i + 1) + '. ' + item.title + ' — ' + item.status));
+                var list = create('ol', 'smcq-review-options');
+                item.options.forEach(function (option) {
+                    list.appendChild(create('li', (option.key === item.correctAnswer ? 'is-correct ' : '') + (option.key === item.yourAnswer && option.key !== item.correctAnswer ? 'is-wrong' : ''),
+                        option.label + '. ' + option.text + (option.key === item.correctAnswer ? ' ✓ Correct' : '') + (option.key === item.yourAnswer ? ' · Your answer' : '')));
+                });
+                box.appendChild(list);
+                if (item.explanation) box.appendChild(create('p', 'smcq-explanation', 'Explanation: ' + item.explanation));
+                body.appendChild(box);
+            });
+            body.appendChild(makeButton('← Exam History', 'smcq-button', function () { loadHistory(page); }));
+        }
+        function prettyDate(sql) {
+            if (!sql) return '—';
+            var time = new Date(sql.replace(' ', 'T') + 'Z');
+            return isNaN(time.getTime()) ? sql : time.toLocaleString();
+        }
+        async function loadHistory(number) {
+            page = number;
+            clear();
+            body.appendChild(create('p', '', 'Loading examination history…'));
+            try {
+                var data = await request('history?page=' + page);
+                clear();
+                if (!data.entries.length) body.appendChild(create('p', '', 'No completed examinations found.'));
+                data.entries.forEach(function (item) {
+                    var card = create('div', 'smcq-history-entry');
+                    card.appendChild(create('strong', '', item.examTitle || ('Exam #' + item.examId)));
+                    card.appendChild(create('p', '', prettyDate(item.submittedAt) + ' · ' +
+                        (item.grade ? item.grade.score + '/' + item.grade.maxMarks + ' marks · ' + (item.grade.passed ? 'Passed' : 'Not passed') : 'Grade unavailable')));
+                    card.appendChild(makeButton('View Result & Answers', 'smcq-button', async function () {
+                        clear();
+                        body.appendChild(create('p', '', 'Loading result…'));
+                        try { resultDetails(await request('attempts/' + item.attemptId + '/result')); }
+                        catch (error) { clear(); body.appendChild(create('p', 'smcq-error', error.message)); body.appendChild(makeButton('Back to History', 'smcq-button', function () { loadHistory(page); })); }
+                    }));
+                    body.appendChild(card);
+                });
+                var pager = create('div', 'smcq-history-pager');
+                if (page > 1) pager.appendChild(makeButton('← Previous', 'smcq-button', function () { loadHistory(page - 1); }));
+                if (data.hasMore) pager.appendChild(makeButton('Next →', 'smcq-button', function () { loadHistory(page + 1); }));
+                body.appendChild(pager);
+            } catch (error) { clear(); body.appendChild(create('p', 'smcq-error', error.message)); }
+        }
+        loadHistory(1);
     });
 })();

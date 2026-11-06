@@ -1,7 +1,6 @@
 <?php
 /**
- * Step 5: Authenticated student examination delivery and private attempts.
- * Grading and answer review deliberately remain outside this release.
+ * Step 6: Authenticated exams, atomic grading, private results, and attempt history.
  *
  * @package SmartMCQManager
  */
@@ -10,12 +9,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 final class SMCQ_Player {
-	const SCHEMA_VERSION = '1';
+	const SCHEMA_VERSION = '2';
 	const ROUTE_NS = 'smcq/v1';
 
 	public static function init() {
 		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
 		add_shortcode( 'smcq_exam', array( __CLASS__, 'shortcode' ) );
+		add_shortcode( 'smcq_history', array( __CLASS__, 'history_shortcode' ) );
 		add_action( 'add_meta_boxes_smcq_exam', array( __CLASS__, 'shortcode_box' ) );
 		add_action( 'plugins_loaded', array( __CLASS__, 'maybe_install' ) );
 		add_filter( 'wp_privacy_personal_data_exporters', array( __CLASS__, 'register_privacy_export' ) );
@@ -44,6 +44,7 @@ final class SMCQ_Player {
 			submitted_at datetime DEFAULT NULL,
 			snapshot longtext NOT NULL,
 			answers longtext NOT NULL,
+			result_json longtext DEFAULT NULL,
 			version int(10) unsigned NOT NULL DEFAULT 0,
 			PRIMARY KEY  (id),
 			UNIQUE KEY active_key (active_key),
@@ -51,7 +52,11 @@ final class SMCQ_Player {
 			KEY exam_status (exam_id,status)
 		) {$charset};";
 		dbDelta( $sql );
-		update_option( 'smcq_attempt_schema', self::SCHEMA_VERSION, false );
+		// Keep retrying the migration if the table or result column could not be created.
+		$column = $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM ' . $table . ' LIKE %s', 'result_json' ) );
+		if ( 'result_json' === $column ) {
+			update_option( 'smcq_attempt_schema', self::SCHEMA_VERSION, false );
+		}
 	}
 
 	public static function maybe_install() {
@@ -76,6 +81,12 @@ final class SMCQ_Player {
 		register_rest_route( self::ROUTE_NS, '/attempts/(?P<id>\d+)/submit', array(
 			'methods' => 'POST', 'callback' => array( __CLASS__, 'submit' ), 'permission_callback' => $auth,
 		) );
+		register_rest_route( self::ROUTE_NS, '/attempts/(?P<id>\d+)/result', array(
+			'methods' => 'GET', 'callback' => array( __CLASS__, 'result' ), 'permission_callback' => $auth,
+		) );
+		register_rest_route( self::ROUTE_NS, '/history', array(
+			'methods' => 'GET', 'callback' => array( __CLASS__, 'history' ), 'permission_callback' => $auth,
+		) );
 	}
 
 	/** REST cookie authentication requires a wp_rest nonce on browsers. */
@@ -92,6 +103,12 @@ final class SMCQ_Player {
 		if ( ! is_user_logged_in() ) {
 			return '<p>' . esc_html__( 'Please log in to start this examination.', 'smart-mcq-manager' ) . ' <a href="' . esc_url( wp_login_url( get_permalink() ) ) . '">' . esc_html__( 'Log in', 'smart-mcq-manager' ) . '</a></p>';
 		}
+		self::assets();
+		return '<section class="smcq-player" data-exam-id="' . esc_attr( $exam_id ) . '" aria-label="' . esc_attr__( 'Online examination', 'smart-mcq-manager' ) . '"><div class="smcq-player-status" role="status" aria-live="polite">' . esc_html__( 'Loading examination…', 'smart-mcq-manager' ) . '</div><div class="smcq-player-body"></div></section>';
+	}
+
+	/** Load the same UI assets for both the exam and student's history shortcode. */
+	private static function assets() {
 		wp_enqueue_style( 'smcq-player', SMCQ_URL . 'assets/player.css', array(), SMCQ_VERSION );
 		wp_enqueue_script( 'smcq-player', SMCQ_URL . 'assets/player.js', array(), SMCQ_VERSION, true );
 		wp_localize_script( 'smcq-player', 'smcqPlayerSettings', array(
@@ -103,13 +120,21 @@ final class SMCQ_Player {
 				'saved' => __( 'Answer saved.', 'smart-mcq-manager' ),
 				'error' => __( 'The request failed. Check your connection and try again.', 'smart-mcq-manager' ),
 				'confirm' => __( 'Submit your examination? You will not be able to edit your answers.', 'smart-mcq-manager' ),
-				'finished' => __( 'Your attempt has been recorded. Scoring and detailed results are coming in Step 6.', 'smart-mcq-manager' ),
+				'finished' => __( 'Your exam has been graded. Review your results below.', 'smart-mcq-manager' ),
 				'expired' => __( 'Time has expired. Your saved answers have been submitted.', 'smart-mcq-manager' ),
 				'unsaved' => __( 'You have an unsaved answer. Leaving now may lose it.', 'smart-mcq-manager' ),
 				'conflict' => __( 'This attempt was updated elsewhere. Reload to avoid overwriting answers.', 'smart-mcq-manager' ),
 			),
 		) );
-		return '<section class="smcq-player" data-exam-id="' . esc_attr( $exam_id ) . '" aria-label="' . esc_attr__( 'Online examination', 'smart-mcq-manager' ) . '"><div class="smcq-player-status" role="status" aria-live="polite">' . esc_html__( 'Loading examination…', 'smart-mcq-manager' ) . '</div><div class="smcq-player-body"></div></section>';
+	}
+
+	/** Student-only history view; attempt data is loaded over the authenticated REST API. */
+	public static function history_shortcode() {
+		if ( ! is_user_logged_in() ) {
+			return '<p>' . esc_html__( 'Please log in to view your exam history.', 'smart-mcq-manager' ) . '</p>';
+		}
+		self::assets();
+		return '<section class="smcq-history" aria-label="' . esc_attr__( 'My examination history', 'smart-mcq-manager' ) . '"><h2>' . esc_html__( 'My Examination History', 'smart-mcq-manager' ) . '</h2><div class="smcq-history-body" aria-live="polite">' . esc_html__( 'Loading examination history…', 'smart-mcq-manager' ) . '</div></section>';
 	}
 
 	public static function shortcode_box() {
@@ -194,15 +219,59 @@ final class SMCQ_Player {
 		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE active_key = %s AND exam_id = %d AND user_id = %d', self::active_key( $exam, $user ), $exam, $user ), ARRAY_A );
 	}
 
-	/** Timeout is finalized on the next server request; grading is deferred. */
+	/** Finalize a frozen attempt with an optimistic version check. Recompute after a concurrent save. */
+	private static function finish( $row, $reason ) {
+		global $wpdb;
+		for ( $retry = 0; $retry < 5 && $row && 'active' === $row['status']; ++$retry ) {
+			$now = self::utc_now();
+			$deadline = self::db_timestamp( $row['deadline_at'] );
+			if ( 'timeout' === $reason && $now < $deadline ) {
+				return $row;
+			}
+			if ( 'manual' === $reason && $now >= $deadline ) {
+				$reason = 'timeout';
+			}
+			$snapshot = json_decode( $row['snapshot'], true );
+			$answers = json_decode( $row['answers'], true );
+			if ( ! is_array( $snapshot ) || ! isset( $snapshot['questions'] ) || ! is_array( $snapshot['questions'] ) ) {
+				return self::error( 'smcq_bad_snapshot', __( 'Cannot grade this exam attempt. Contact an administrator.', 'smart-mcq-manager' ), 500 );
+			}
+			$grade = wp_json_encode( SMCQ_Results::grade( $snapshot, $answers ) );
+			$submitted = 'timeout' === $reason ? $row['deadline_at'] : self::utc_sql( $now );
+			// The same version condition protects answer saving and finalization from races.
+			$updated = $wpdb->query( $wpdb->prepare(
+				'UPDATE ' . self::table() . " SET status = 'submitted', active_key = NULL, completion_reason = %s, submitted_at = %s, result_json = %s, version = version + 1 WHERE id = %d AND user_id = %d AND status = 'active' AND version = %d",
+				$reason, $submitted, $grade, (int) $row['id'], (int) $row['user_id'], (int) $row['version']
+			) );
+			$row = self::load_attempt( (int) $row['id'], (int) $row['user_id'] );
+			if ( 1 === $updated || ( $row && 'submitted' === $row['status'] ) ) {
+				return self::ensure_graded( $row );
+			}
+		}
+		return $row && 'submitted' === $row['status'] ? self::ensure_graded( $row ) : self::error( 'smcq_finalize_conflict', __( 'Your attempt was updated in another tab. Please retry.', 'smart-mcq-manager' ), 409 );
+	}
+
+	/** Grade completed v0.5.0 attempts lazily, without changing their original answers. */
+	private static function ensure_graded( $row ) {
+		if ( ! $row || 'submitted' !== $row['status'] || ! empty( $row['result_json'] ) ) {
+			return $row;
+		}
+		$snapshot = json_decode( $row['snapshot'], true );
+		if ( ! is_array( $snapshot ) || ! isset( $snapshot['questions'] ) || ! is_array( $snapshot['questions'] ) ) {
+			return $row;
+		}
+		global $wpdb;
+		$wpdb->query( $wpdb->prepare(
+			'UPDATE ' . self::table() . ' SET result_json = %s WHERE id = %d AND user_id = %d AND status = %s AND result_json IS NULL',
+			wp_json_encode( SMCQ_Results::grade( $snapshot, json_decode( $row['answers'], true ) ) ), (int) $row['id'], (int) $row['user_id'], 'submitted'
+		) );
+		return self::load_attempt( (int) $row['id'], (int) $row['user_id'] );
+	}
+
+	/** Timeout finalization is lazy (on the next API call), but always includes grading. */
 	private static function finalize_if_due( $row ) {
 		if ( $row && 'active' === $row['status'] && self::db_timestamp( $row['deadline_at'] ) <= self::utc_now() ) {
-			global $wpdb;
-			$wpdb->query( $wpdb->prepare(
-				'UPDATE ' . self::table() . " SET status = 'submitted', active_key = NULL, completion_reason = 'timeout', submitted_at = deadline_at, version = version + 1 WHERE id = %d AND status = 'active'",
-				(int) $row['id']
-			) );
-			return self::load_attempt( (int) $row['id'], (int) $row['user_id'] );
+			return self::finish( $row, 'timeout' );
 		}
 		return $row;
 	}
@@ -240,6 +309,7 @@ final class SMCQ_Player {
 				'correct' => (string) get_post_meta( $id, '_smcq_correct', true ),
 				'points' => '' === $points ? 1.0 : (float) $points,
 				'negative' => '' === $negative ? 0.0 : (float) $negative,
+				'explanation' => wp_strip_all_tags( (string) get_post_meta( $id, '_smcq_explanation', true ), true ),
 			);
 		}
 		return array( 'questions' => $questions, 'policy' => array( 'pass_percent' => $config['pass_percent'] ) );
@@ -302,12 +372,13 @@ final class SMCQ_Player {
 		$row = self::active_attempt( $exam_id, $user );
 		if ( $row ) {
 			$row = self::finalize_if_due( $row );
+			if ( is_wp_error( $row ) ) { return $row; }
 			if ( 'active' === $row['status'] ) {
 				return rest_ensure_response( self::view( $row ) );
 			}
 		}
 		$count = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . self::table() . ' WHERE user_id = %d AND exam_id = %d', $user, $exam_id ) );
-		$last = $wpdb->get_row( $wpdb->prepare( 'SELECT status,completion_reason FROM ' . self::table() . ' WHERE user_id = %d AND exam_id = %d ORDER BY id DESC LIMIT 1', $user, $exam_id ), ARRAY_A );
+		$last = $wpdb->get_row( $wpdb->prepare( 'SELECT id,status,completion_reason FROM ' . self::table() . ' WHERE user_id = %d AND exam_id = %d ORDER BY id DESC LIMIT 1', $user, $exam_id ), ARRAY_A );
 		$config = self::config( $exam_id );
 		$window = self::check_window( $config, self::utc_now() );
 		return rest_ensure_response( array(
@@ -315,6 +386,7 @@ final class SMCQ_Player {
 			'instructions' => wp_strip_all_tags( (string) get_post_field( 'post_content', $exam_id ), true ),
 			'duration' => $config['duration'], 'attemptsUsed' => $count,
 			'attemptLimit' => $config['attempt_limit'],
+			'lastAttemptId' => $last && 'submitted' === $last['status'] ? (int) $last['id'] : null,
 			'canStart' => ! is_wp_error( $window ) && ( 0 === $config['attempt_limit'] || $count < $config['attempt_limit'] ),
 			'message' => is_wp_error( $window ) ? $window->get_error_message() : ( $last ? __( 'Your previous attempt was recorded.', 'smart-mcq-manager' ) : '' ),
 		) );
@@ -336,6 +408,7 @@ final class SMCQ_Player {
 		$existing = self::active_attempt( $exam_id, $user );
 		if ( $existing ) {
 			$existing = self::finalize_if_due( $existing );
+			if ( is_wp_error( $existing ) ) { return $existing; }
 			if ( 'active' === $existing['status'] ) {
 				return rest_ensure_response( self::view( $existing ) );
 			}
@@ -366,7 +439,9 @@ final class SMCQ_Player {
 			// The active-key UNIQUE constraint prevents two active attempts across tabs.
 			$existing = self::active_attempt( $exam_id, $user );
 			if ( $existing ) {
-				return rest_ensure_response( self::view( self::finalize_if_due( $existing ) ) );
+				$existing = self::finalize_if_due( $existing );
+				if ( is_wp_error( $existing ) ) { return $existing; }
+				return rest_ensure_response( 'active' === $existing['status'] ? self::view( $existing ) : self::minimal_view( $existing ) );
 			}
 			return self::error( 'smcq_attempt_failed', __( 'Could not create an attempt. Please retry.', 'smart-mcq-manager' ), 500 );
 		}
@@ -382,6 +457,7 @@ final class SMCQ_Player {
 			return self::error( 'smcq_no_attempt', __( 'Attempt not found.', 'smart-mcq-manager' ), 404 );
 		}
 		$row = self::finalize_if_due( $row );
+		if ( is_wp_error( $row ) ) { return $row; }
 		if ( 'active' !== $row['status'] ) {
 			return self::error( 'smcq_already_finished', __( 'This attempt is already finished.', 'smart-mcq-manager' ), 409 );
 		}
@@ -413,24 +489,83 @@ final class SMCQ_Player {
 		return rest_ensure_response( array( 'saved' => true, 'version' => $new_version, 'answers' => $answers, 'serverNow' => self::utc_now() * 1000 ) );
 	}
 
+	/** Submission is idempotent, including when a browser retries after a timeout. */
 	public static function submit( $request ) {
-		global $wpdb;
 		$attempt_id = absint( $request['id'] );
 		$user = get_current_user_id();
 		$row = self::load_attempt( $attempt_id, $user );
 		if ( ! $row ) {
 			return self::error( 'smcq_no_attempt', __( 'Attempt not found.', 'smart-mcq-manager' ), 404 );
 		}
-		$row = self::finalize_if_due( $row );
 		if ( 'active' === $row['status'] ) {
-			$now = self::utc_sql( self::utc_now() );
-			$wpdb->query( $wpdb->prepare(
-				'UPDATE ' . self::table() . " SET status = 'submitted', active_key = NULL, completion_reason = 'manual', submitted_at = %s, version = version + 1 WHERE id = %d AND user_id = %d AND status = 'active' AND deadline_at > %s",
-				$now, $attempt_id, $user, $now
-			) );
-			$row = self::finalize_if_due( self::load_attempt( $attempt_id, $user ) );
+			$row = self::finish( $row, 'manual' );
 		}
-		return rest_ensure_response( self::minimal_view( $row ) );
+		if ( is_wp_error( $row ) ) { return $row; }
+		if ( 'submitted' !== $row['status'] ) {
+			return self::error( 'smcq_pending', __( 'The attempt has not been submitted.', 'smart-mcq-manager' ), 409 );
+		}
+		$result = self::result_view( self::ensure_graded( $row ) );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	private static function result_view( $row ) {
+		$snapshot = json_decode( $row['snapshot'], true );
+		$grade = json_decode( $row['result_json'], true );
+		if ( ! is_array( $snapshot ) || ! is_array( $grade ) ) {
+			return self::error( 'smcq_ungraded', __( 'This result could not be loaded. Contact an administrator.', 'smart-mcq-manager' ), 500 );
+		}
+		return array(
+			'attemptId' => (int) $row['id'],
+			'examId' => (int) $row['exam_id'],
+			'examTitle' => get_the_title( (int) $row['exam_id'] ),
+			'status' => 'submitted',
+			'completionReason' => $row['completion_reason'],
+			'submittedAt' => $row['submitted_at'],
+			'grade' => $grade,
+			'review' => SMCQ_Results::review( $snapshot, json_decode( $row['answers'], true ) ),
+		);
+	}
+
+	/** Only the owner can retrieve answers, explanations, and grades, after submission. */
+	public static function result( $request ) {
+		$row = self::load_attempt( absint( $request['id'] ), get_current_user_id() );
+		if ( ! $row ) {
+			return self::error( 'smcq_no_attempt', __( 'Attempt not found.', 'smart-mcq-manager' ), 404 );
+		}
+		$row = self::finalize_if_due( $row );
+		if ( is_wp_error( $row ) ) { return $row; }
+		if ( 'submitted' !== $row['status'] ) {
+			return self::error( 'smcq_in_progress', __( 'Finish the examination before viewing results.', 'smart-mcq-manager' ), 403 );
+		}
+		$row = self::ensure_graded( $row );
+		$result = self::result_view( $row );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	/** Paginated history, filtered by the authenticated user ID at the SQL layer. */
+	public static function history( $request ) {
+		global $wpdb;
+		$user = get_current_user_id();
+		$page = max( 1, min( 10000, absint( $request->get_param( 'page' ) ) ) );
+		$per_page = 10;
+		$rows = $wpdb->get_results( $wpdb->prepare(
+			'SELECT * FROM ' . self::table() . " WHERE user_id = %d AND status = 'submitted' ORDER BY id DESC LIMIT %d OFFSET %d",
+			$user, $per_page + 1, ( $page - 1 ) * $per_page
+		), ARRAY_A );
+		$has_more = count( $rows ) > $per_page;
+		$entries = array();
+		foreach ( array_slice( $rows, 0, $per_page ) as $row ) {
+			$row = self::ensure_graded( $row );
+			$grade = json_decode( $row['result_json'], true );
+			$entries[] = array(
+				'attemptId' => (int) $row['id'], 'examId' => (int) $row['exam_id'],
+				'examTitle' => get_the_title( (int) $row['exam_id'] ),
+				'submittedAt' => $row['submitted_at'],
+				'completionReason' => $row['completion_reason'],
+				'grade' => is_array( $grade ) ? $grade : null,
+			);
+		}
+		return rest_ensure_response( array( 'entries' => $entries, 'page' => $page, 'hasMore' => $has_more ) );
 	}
 
 	public static function register_privacy_export( $exporters ) {
@@ -461,6 +596,7 @@ final class SMCQ_Player {
 				array( 'name' => __( 'Start (UTC)', 'smart-mcq-manager' ), 'value' => $row['started_at'] ),
 				array( 'name' => __( 'Status', 'smart-mcq-manager' ), 'value' => $row['status'] ),
 				array( 'name' => __( 'Submitted answers', 'smart-mcq-manager' ), 'value' => $row['answers'] ),
+				array( 'name' => __( 'Grade summary', 'smart-mcq-manager' ), 'value' => isset( $row['result_json'] ) ? $row['result_json'] : '' ),
 			) );
 		}
 		return array( 'data' => $data, 'done' => count( $rows ) < 25 );

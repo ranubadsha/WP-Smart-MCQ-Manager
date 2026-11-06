@@ -100,7 +100,7 @@ final class SMCQ_Exams {
 		$start = (string) get_post_meta( $post->ID, '_smcq_exam_start', true );
 		$end = (string) get_post_meta( $post->ID, '_smcq_exam_end', true );
 		?>
-		<p class="description"><?php esc_html_e( 'Configure an exam blueprint. Exam time limits, attempt limits, scheduling, and question/option order are enforced for student attempts. Automatic grading will be added in Step 6.', 'smart-mcq-manager' ); ?></p>
+		<p class="description"><?php esc_html_e( 'Configure an exam blueprint. Exam time limits, attempt limits, scheduling, and question/option order are enforced for student attempts. Completed attempts are graded automatically using these frozen marking rules.', 'smart-mcq-manager' ); ?></p>
 		<div class="smcq-exam-settings-grid">
 			<p><label for="smcq_exam_duration"><strong><?php esc_html_e( 'Duration (minutes)', 'smart-mcq-manager' ); ?></strong></label><input class="widefat" type="number" id="smcq_exam_duration" name="smcq_exam_duration" min="1" max="600" required value="<?php echo esc_attr( $duration ); ?>" /></p>
 			<p><label for="smcq_exam_pass_percent"><strong><?php esc_html_e( 'Passing percentage', 'smart-mcq-manager' ); ?></strong></label><input class="widefat" type="number" id="smcq_exam_pass_percent" name="smcq_exam_pass_percent" min="0" max="100" step="0.01" value="<?php echo esc_attr( $pass ); ?>" /></p>

@@ -1,4 +1,4 @@
-name: PHP Lint, Import, Exam Builder and Player Tests
+name: PHP Lint, Import, Exam Builder and Grading Tests
 on:
   push:
   pull_request:
@@ -22,5 +22,7 @@ jobs:
         run: php tests/test-exams-cli.php
       - name: Exam player safety helper tests
         run: php tests/test-player-cli.php
+      - name: Grading and answer review tests
+        run: php tests/test-results-cli.php
       - name: Frontend JavaScript syntax
         run: node --check assets/player.js

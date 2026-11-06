@@ -2,34 +2,37 @@
 Contributors: smart-mcq
 Requires at least: 6.0
 Requires PHP: 7.4
-Stable tag: 0.5.0
+Stable tag: 0.6.0
 License: GPLv2 or later
 
-Step 5: Private MCQ question bank, bulk question import, exam builder, and secure logged-in student exam interface.
+Step 6: Private question bank, import tools, exam builder, authenticated exam interface, automatic scoring, answer explanations, and student history.
 
-== Description ==
-Features:
-* Private question editor with four options, answer key, explanation and classification.
-* Bulk CSV/XLSX import with mapping, validation, preview, and duplicate checks.
-* Exam creation with manual/filtered question assignment and exam scheduling.
-* Logged-in student exam interface via [smcq_exam id="123"].
-* One active attempt per user/exam, allowed-attempt caps and server-side deadlines.
-* AJAX-style REST answer saving, mobile navigation, and automatic timeout finalization on next server request.
-* Immutable attempt snapshots hide correct answers from the student.
-* WordPress privacy data exporter / eraser for attempts.
+== Features ==
+* Private MCQ question bank (A-D) with subjects, topics, exam sources, language, difficulty, references and explanations.
+* CSV/XLSX bulk importer with mapping, preview, validation and duplicate checks.
+* Exam builder with manual/random question selection, exam duration, attempt limits, pass percentage, per-question or fixed marks, penalties and scheduled access.
+* Logged-in student exam player with autosaved answers, shuffled questions/options, server timer, secure submission and resume.
+* Automatic grading and negative marking; correct, wrong and skipped counts; score percentage, attempted accuracy and pass/fail.
+* Detailed answer review from frozen attempt snapshots; personal results history.
+* Security via WordPress REST nonce, owner-scoped attempts, answer-key protection, guarded updates and privacy exporter/eraser.
 
-Not included yet: score calculation, negative-mark grading, answer review, reports, and student history. They are planned for Step 6.
+== Shortcodes ==
+[smcq_exam id="123"] — student-facing examination for exam ID 123.
+[smcq_history] — student-only personal history and post-submission answer reviews.
 
 == Installation ==
-1. Back up your database, and use a staging site for initial testing.
-2. Plugins -> Add New -> Upload Plugin -> select ZIP; replace current plugin when upgrading.
-3. Create and publish an exam under Smart MCQ -> Exams.
-4. Put [smcq_exam id="123"] (replace 123 with your exam post ID) on a WordPress page.
-5. Log in as a student and start the examination.
+1. Back up WordPress and try the update on a staging site.
+2. WordPress Admin > Plugins > Add New > Upload Plugin. Select smart-mcq-manager-step6-v0.6.0.zip.
+3. Choose Replace current with uploaded when upgrading. Do not uninstall the old version.
+4. Create an exam in Smart MCQ > Exams, publish it, then add [smcq_exam id="123"] to a WordPress page.
+5. Log in as a Subscriber and complete a test attempt. Create a second page containing [smcq_history].
+6. Exclude personalized exam/history pages and plugin REST endpoints from full-page cache.
 
-== Important ==
-* Students must log in. HTTPS recommended; exclude exam pages and /wp-json/smcq/v1/ from page caches.
-* Saving requires an internet connection. If a save fails, retry it before submitting.
-* Timeout finalization occurs on the next API call, not via background cron.
-* WordPress 6.0+ and PHP 7.4+. Excel import needs ZIP/SimpleXML PHP extensions.
-* Do not uninstall the previous version during upgrades; retain existing questions and exams.
+== Upgrade Notes ==
+= 0.6.0 =
+* Adds result_json to the existing attempt table using dbDelta; old saved attempts can be graded on demand.
+* Safely computes grades against frozen attempts and preserves existing question and exam metadata.
+* Only a completed attempt's owner can read its score, correct answers and review.
+
+== Limitations ==
+This is a development release, not a live-proctored exam product. Requires WordPress integration testing. No delayed results, teacher dashboard, public leaderboard, certificates, subscription controls, or offline answer queue yet. Completed results are immediately visible to the owner. If upgrading from Step 5, old attempts did not preserve explanation text in their snapshots.
