@@ -523,6 +523,11 @@ final class SMCQ_Player {
 		if ( ! is_array( $snapshot ) || ! is_array( $grade ) ) {
 			return self::error( 'smcq_ungraded', __( 'This result could not be loaded. Contact an administrator.', 'smart-mcq-manager' ), 500 );
 		}
+		$review = SMCQ_Results::review( $snapshot, json_decode( $row['answers'], true ) );
+		foreach ( $review as &$item ) {
+			$item['practiceEligible'] = SMCQ_Practice::eligible( (int) $item['questionId'] );
+		}
+		unset( $item );
 		return array(
 			'attemptId' => (int) $row['id'],
 			'examId' => (int) $row['exam_id'],
@@ -531,7 +536,7 @@ final class SMCQ_Player {
 			'completionReason' => $row['completion_reason'],
 			'submittedAt' => $row['submitted_at'],
 			'grade' => $grade,
-			'review' => SMCQ_Results::review( $snapshot, json_decode( $row['answers'], true ) ),
+			'review' => $review,
 		);
 	}
 

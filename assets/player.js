@@ -34,6 +34,21 @@
         return data;
     };
 
+    function addPracticeBookmark(container, item) {
+        if (!item.practiceEligible) return;
+        var save = makeButton('☆ Bookmark for Revision', 'smcq-button smcq-review-bookmark', async function () {
+            save.disabled = true;
+            try {
+                await request('practice/bookmarks/' + item.questionId, 'POST', {});
+                save.textContent = '★ Saved for Revision';
+            } catch (error) {
+                save.textContent = error.message;
+                save.disabled = false;
+            }
+        });
+        container.appendChild(save);
+    }
+
     document.querySelectorAll('.smcq-player[data-exam-id]').forEach(function (root) {
         var examId = Number(root.getAttribute('data-exam-id'));
         var status = root.querySelector('.smcq-player-status');
@@ -257,6 +272,7 @@
                     details.appendChild(list);
                     if (!item.yourAnswer) details.appendChild(create('p', '', 'You did not answer this question.'));
                     if (item.explanation) details.appendChild(create('p', 'smcq-explanation', 'Explanation: ' + item.explanation));
+                    addPracticeBookmark(details, item);
                     container.appendChild(details);
                 });
             }
@@ -321,6 +337,7 @@
                 });
                 box.appendChild(list);
                 if (item.explanation) box.appendChild(create('p', 'smcq-explanation', 'Explanation: ' + item.explanation));
+                addPracticeBookmark(box, item);
                 body.appendChild(box);
             });
             body.appendChild(makeButton('← Exam History', 'smcq-button', function () { loadHistory(page); }));
