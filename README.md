@@ -1,3 +1,7 @@
+# WordPress.org submission candidate — v1.4.1
+
+The WordPress.org packaging preparation is available in the `readme.txt`, `LICENSE.txt`, and `languages/smart-mcq-manager.pot` files and the `directory-submission/` documents. This is **not a claim of WordPress.org approval**; Plugin Check and live-site tests remain outstanding.
+
 # Smart MCQ Manager v1.4.0 — Advanced workflow upgrade
 
 **Status: development / pre-production.** Upgrades v1.3.0, preserving existing question, exam, attempt, report, practice, and WooCommerce records. **Do not launch high-stakes or paid exams until staging, checkout, load and security tests pass.**
