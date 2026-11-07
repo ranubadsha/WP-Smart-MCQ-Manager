@@ -4,7 +4,7 @@ Tags: exams, quiz, mcq, education, assessment
 Requires at least: 6.2
 Requires PHP: 7.4
 Tested up to: 6.2
-Stable tag: 1.4.2
+Stable tag: 1.4.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -93,6 +93,10 @@ This release does not automatically delete examination and practice records on d
 They depend on PHP XML/DOM and ZIP support. Check **Smart MCQ > System Status** for server requirements.
 
 == Changelog ==
+
+= 1.4.3 =
+* Clarify translator placeholders for the administrative exam report pagination label.
+
 
 = 1.4.2 =
 * Use WordPress 6.2+ identifier placeholders for custom-table queries.
