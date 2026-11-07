@@ -1,9 +1,10 @@
 === Smart MCQ Manager ===
 Contributors: ranubadsha
 Tags: exams, quiz, mcq, education, assessment
-Requires at least: 6.0
+Requires at least: 6.2
 Requires PHP: 7.4
-Stable tag: 1.4.1
+Tested up to: 6.2
+Stable tag: 1.4.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -92,6 +93,13 @@ This release does not automatically delete examination and practice records on d
 They depend on PHP XML/DOM and ZIP support. Check **Smart MCQ > System Status** for server requirements.
 
 == Changelog ==
+
+= 1.4.2 =
+* Use WordPress 6.2+ identifier placeholders for custom-table queries.
+* Refactor CSV import/export and temporary Excel file cleanup to reduce prohibited direct filesystem calls.
+* Improve readme metadata, translation comments, and request input handling.
+* Preserve existing exam attempts and stored data during upgrade.
+
 
 = 1.4.1 =
 * Prepare WordPress.org-compliant listing and plugin header metadata.
