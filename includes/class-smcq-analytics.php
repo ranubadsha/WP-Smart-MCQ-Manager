@@ -53,11 +53,9 @@ final class SMCQ_Analytics {
 			return new WP_Error( 'smcq_auth_required', __( 'Log in first.', 'smart-mcq-manager' ), array( 'status' => 401 ) );
 		}
 		$table = self::table();
-		$count = (int) $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND status = 'submitted'", $user_id
+		$count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE user_id = %d AND status = 'submitted'", $table, $user_id
 		) );
-		$rows = $wpdb->get_results( $wpdb->prepare(
-			"SELECT id,exam_id,started_at,submitted_at,snapshot,answers,result_json FROM {$table} WHERE user_id = %d AND status = 'submitted' ORDER BY id DESC LIMIT %d",
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id,exam_id,started_at,submitted_at,snapshot,answers,result_json FROM %i WHERE user_id = %d AND status = 'submitted' ORDER BY id DESC LIMIT %d", $table,
 			$user_id, self::MAX_PERSONAL_ROWS
 		), ARRAY_A );
 		$summary = self::summarize( is_array( $rows ) ? $rows : array(), 20 );
@@ -212,7 +210,7 @@ final class SMCQ_Analytics {
 		}
 		global $wpdb;
 		$rows = $wpdb->get_results( $wpdb->prepare(
-			'SELECT id,user_id,started_at,submitted_at,snapshot,answers,result_json FROM ' . self::table() . " WHERE exam_id = %d AND status = 'submitted' ORDER BY id DESC LIMIT %d",
+			'SELECT id,user_id,started_at,submitted_at,snapshot,answers,result_json FROM ' . '%i' . " WHERE exam_id = %d AND status = 'submitted' ORDER BY id DESC LIMIT %d", self::table(),
 			$exam_id, self::MAX_LEADERBOARD_ROWS
 		), ARRAY_A );
 		$ranks = self::rank( is_array( $rows ) ? $rows : array(), 10 );
@@ -247,16 +245,14 @@ final class SMCQ_Analytics {
 		echo '</select> <button type="submit" class="button button-primary">' . esc_html__( 'View Report', 'smart-mcq-manager' ) . '</button></form>';
 		if ( ! $exam_id || 'smcq_exam' !== get_post_type( $exam_id ) ) { echo '<p>' . esc_html__( 'Select an exam to see administrator-only student results.', 'smart-mcq-manager' ) . '</p></div>'; return; }
 		$table = self::table();
-		$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE exam_id = %d AND status = 'submitted'", $exam_id ) );
-		$stats = $wpdb->get_results( $wpdb->prepare(
-			"SELECT id,exam_id,started_at,submitted_at,snapshot,answers,result_json FROM {$table} WHERE exam_id = %d AND status = 'submitted' ORDER BY id DESC LIMIT %d",
+		$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE exam_id = %d AND status = 'submitted'", $table, $exam_id ) );
+		$stats = $wpdb->get_results( $wpdb->prepare( "SELECT id,exam_id,started_at,submitted_at,snapshot,answers,result_json FROM %i WHERE exam_id = %d AND status = 'submitted' ORDER BY id DESC LIMIT %d", $table,
 			$exam_id, self::MAX_REPORT_SAMPLE
 		), ARRAY_A );
 		$summary = self::summarize( is_array( $stats ) ? $stats : array(), 0 );
 		echo '<p><strong>' . esc_html__( 'Completed attempts:', 'smart-mcq-manager' ) . '</strong> ' . esc_html( $total ) . ' · <strong>' . esc_html__( 'Average score in recent sample:', 'smart-mcq-manager' ) . '</strong> ' . esc_html( $summary['averagePercentage'] ) . '% · ' . esc_html__( 'Sample size:', 'smart-mcq-manager' ) . ' ' . esc_html( $summary['gradedAttempts'] ) . ' (' . esc_html__( 'maximum', 'smart-mcq-manager' ) . ' ' . esc_html( self::MAX_REPORT_SAMPLE ) . ')</p>';
 		$per_page = 25;
-		$rows = $wpdb->get_results( $wpdb->prepare(
-			"SELECT id,user_id,submitted_at,snapshot,answers,result_json FROM {$table} WHERE exam_id = %d AND status = 'submitted' ORDER BY id DESC LIMIT %d OFFSET %d",
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id,user_id,submitted_at,snapshot,answers,result_json FROM %i WHERE exam_id = %d AND status = 'submitted' ORDER BY id DESC LIMIT %d OFFSET %d", $table,
 			$exam_id, $per_page, ( $page - 1 ) * $per_page
 		), ARRAY_A );
 		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Attempt', 'smart-mcq-manager' ) . '</th><th>' . esc_html__( 'Student', 'smart-mcq-manager' ) . '</th><th>' . esc_html__( 'Submitted UTC', 'smart-mcq-manager' ) . '</th><th>' . esc_html__( 'Score', 'smart-mcq-manager' ) . '</th><th>' . esc_html__( 'Accuracy', 'smart-mcq-manager' ) . '</th><th>' . esc_html__( 'Result', 'smart-mcq-manager' ) . '</th></tr></thead><tbody>';
@@ -272,7 +268,8 @@ final class SMCQ_Analytics {
 			$pages = (int) ceil( $total / $per_page );
 			echo '<p class="tablenav">';
 			if ( $page > 1 ) { echo '<a class="button" href="' . esc_url( add_query_arg( 'smcq_page', $page - 1, $base ) ) . '">' . esc_html__( 'Previous', 'smart-mcq-manager' ) . '</a> '; }
-			echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'smart-mcq-manager' ), $page, $pages ) );
+			// translators: 1: current page number, 2: total number of pages.
+		echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'smart-mcq-manager' ), $page, $pages ) );
 			if ( $page < $pages ) { echo ' <a class="button" href="' . esc_url( add_query_arg( 'smcq_page', $page + 1, $base ) ) . '">' . esc_html__( 'Next', 'smart-mcq-manager' ) . '</a>'; }
 			echo '</p>';
 		}
