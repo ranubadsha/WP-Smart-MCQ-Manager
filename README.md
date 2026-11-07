@@ -1,4 +1,8 @@
-# WordPress.org submission candidate — v1.4.1
+# Smart MCQ Manager v1.4.2 — Plugin Check remediation
+
+Version 1.4.2 addresses the 110 errors and 235 warnings reported by the user against v1.4.1, with specific code changes described in `directory-submission/PLUGIN-CHECK-FIX-REPORT.md`. Its WordPress.org submission status is **pending**: official Plugin Check must be rerun on v1.4.2 and the site must be integration tested. Requires WordPress 6.2+ for `%i` table-name placeholders.
+
+# Previous submission preparation — v1.4.1
 
 The WordPress.org packaging preparation is available in the `readme.txt`, `LICENSE.txt`, and `languages/smart-mcq-manager.pot` files and the `directory-submission/` documents. This is **not a claim of WordPress.org approval**; Plugin Check and live-site tests remain outstanding.
 
