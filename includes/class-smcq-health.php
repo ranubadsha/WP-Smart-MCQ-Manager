@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 final class SMCQ_Health {
 	const MIN_PHP = '7.4';
-	const MIN_WP = '6.0';
+	const MIN_WP = '6.2';
 	const LIMIT_ROWS = 250;
 
 	public static function init() {
@@ -43,7 +43,7 @@ final class SMCQ_Health {
 	public static function index_names( $table ) {
 		global $wpdb;
 		if ( ! is_string( $table ) || ! preg_match( '/^[a-zA-Z0-9_]+$/D', $table ) ) { return array(); }
-		$rows = $wpdb->get_results( 'SHOW INDEX FROM `' . $table . '`', ARRAY_A );
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SHOW INDEX FROM %i', $table ), ARRAY_A );
 		if ( ! is_array( $rows ) ) { return array(); }
 		return array_values( array_unique( array_filter( array_map( static function ( $row ) {
 			return isset( $row['Key_name'] ) ? (string) $row['Key_name'] : '';
