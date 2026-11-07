@@ -1,3 +1,7 @@
+# Smart MCQ Manager v1.4.3 — Translator comment correction
+
+This patch places the `translators:` comment directly above the `__()` call for the administrative exam pagination label (`Page %1$d of %2$d`) in `includes/class-smcq-analytics.php`. The original v1.4.2 Plugin Check remediation notes are retained below. **Official Plugin Check must still be rerun on the installed v1.4.3 package; this is not WordPress.org approval.**
+
 # Smart MCQ Manager v1.4.2 — Plugin Check remediation
 
 Version 1.4.2 addresses the 110 errors and 235 warnings reported by the user against v1.4.1, with specific code changes described in `directory-submission/PLUGIN-CHECK-FIX-REPORT.md`. Its WordPress.org submission status is **pending**: official Plugin Check must be rerun on v1.4.2 and the site must be integration tested. Requires WordPress 6.2+ for `%i` table-name placeholders.
