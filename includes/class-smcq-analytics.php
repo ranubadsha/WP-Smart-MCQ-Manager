@@ -268,8 +268,13 @@ final class SMCQ_Analytics {
 			$pages = (int) ceil( $total / $per_page );
 			echo '<p class="tablenav">';
 			if ( $page > 1 ) { echo '<a class="button" href="' . esc_url( add_query_arg( 'smcq_page', $page - 1, $base ) ) . '">' . esc_html__( 'Previous', 'smart-mcq-manager' ) . '</a> '; }
-			// translators: 1: current page number, 2: total number of pages.
-		echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'smart-mcq-manager' ), $page, $pages ) );
+			$page_label = sprintf(
+				/* translators: 1: Current page number, 2: Total number of pages. */
+				__( 'Page %1$d of %2$d', 'smart-mcq-manager' ),
+				$page,
+				$pages
+			);
+			echo esc_html( $page_label );
 			if ( $page < $pages ) { echo ' <a class="button" href="' . esc_url( add_query_arg( 'smcq_page', $page + 1, $base ) ) . '">' . esc_html__( 'Next', 'smart-mcq-manager' ) . '</a>'; }
 			echo '</p>';
 		}
