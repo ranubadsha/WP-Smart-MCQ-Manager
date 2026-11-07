@@ -201,7 +201,9 @@ final class SMCQ_Importer {
 		$defaults = self::suggested_mapping( $headers );
 		?>
 		<h2><?php esc_html_e( '2. Preview and map columns', 'smart-mcq-manager' ); ?></h2>
-		<p><?php printf( esc_html__( '%d questions found. Showing the first 5 rows. The question and all four options must be filled in.', 'smart-mcq-manager' ), count( $state['rows'] ) ); ?></p>
+		<p><?php
+		/* translators: %d: number of imported questions detected in the preview. */
+		printf( esc_html__( '%d questions found. Showing the first 5 rows. The question and all four options must be filled in.', 'smart-mcq-manager' ), count( $state['rows'] ) ); ?></p>
 		<div style="max-width:100%;overflow:auto"><table class="widefat striped"><thead><tr><th><?php esc_html_e( 'Source row', 'smart-mcq-manager' ); ?></th>
 		<?php foreach ( $headers as $header ) : ?><th><?php echo esc_html( $header ); ?></th><?php endforeach; ?>
 		</tr></thead><tbody>
@@ -488,13 +490,14 @@ final class SMCQ_Importer {
 		nocache_headers();
 		header( 'Content-Type: text/csv; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename="smart-mcq-import-template.csv"' );
-		$file = fopen( 'php://output', 'w' );
-		if ( false === $file ) { wp_die( 'Could not create template.' ); }
-		fwrite( $file, "\xEF\xBB\xBF" );
-		fputcsv( $file, array_keys( self::field_labels() ) );
-		fputcsv( $file, array( 'What is the capital of Bangladesh?', 'Dhaka', 'Khulna', 'Rajshahi', 'Sylhet', 'A', 'single', '', 'Dhaka is the capital.', 'General Knowledge', 'Bangladesh', 'BCS', 'Geography|Bangladesh', 'easy', 'en', '2025', 'General Knowledge Book', 'https://example.org/', '1', '0.25' ) );
-		fputcsv( $file, array( 'বাংলাদেশের রাজধানী কোনটি?', 'ঢাকা', 'চট্টগ্রাম', 'খুলনা', 'সিলেট', 'A', 'single', '', 'ঢাকা বাংলাদেশের রাজধানী।', 'সাধারণ জ্ঞান', 'বাংলাদেশ বিষয়াবলি', 'বিসিএস', 'বাংলাদেশ', 'easy', 'bn', '2026', '', '', '1', '0' ) );
-		fclose( $file );
+		$file = new SplTempFileObject();
+		$file->fputcsv( array_keys( self::field_labels() ) );
+		$file->fputcsv( array( 'What is the capital of Bangladesh?', 'Dhaka', 'Khulna', 'Rajshahi', 'Sylhet', 'A', 'single', '', 'Dhaka is the capital.', 'General Knowledge', 'Bangladesh', 'BCS', 'Geography|Bangladesh', 'easy', 'en', '2025', 'General Knowledge Book', 'https://example.org/', '1', '0.25' ) );
+		$file->fputcsv( array( 'বাংলাদেশের রাজধানী কোনটি?', 'ঢাকা', 'চট্টগ্রাম', 'খুলনা', 'সিলেট', 'A', 'single', '', 'ঢাকা বাংলাদেশের রাজধানী।', 'সাধারণ জ্ঞান', 'বাংলাদেশ বিষয়াবলি', 'বিসিএস', 'বাংলাদেশ', 'easy', 'bn', '2026', '', '', '1', '0' ) );
+		$file->rewind();
+		echo "\xEF\xBB\xBF"; // UTF-8 BOM for spreadsheet applications.
+		while ( ! $file->eof() ) { echo $file->fgets(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSV attachment bytes, not HTML.
+		}
 		exit;
 	}
 
@@ -575,33 +578,37 @@ final class SMCQ_Importer {
         return self::finalize_rows( $headers, $rows );
     }
 
-	/** Parse RFC 4180-ish CSV, preserving quoted newlines and UTF-8. */
+	/** Parse bounded RFC 4180 CSV with PHP's SPL CSV reader, including quoted line breaks. */
 	private static function parse_csv( $path ) {
-		$fp = fopen( $path, 'rb' );
-		if ( ! $fp ) { return new WP_Error( 'file', 'Cannot open CSV.' ); }
-		$sample = fgets( $fp, 16384 );
-		if ( false === $sample ) { fclose( $fp ); return new WP_Error( 'empty', 'Empty CSV.' ); }
+		if ( ! is_file( $path ) || filesize( $path ) > self::MAX_BYTES ) {
+			return new WP_Error( 'file', 'Invalid CSV file size.' );
+		}
+		try { $fp = new SplFileObject( $path, 'rb' ); }
+		catch ( RuntimeException $error ) { return new WP_Error( 'file', 'Cannot open CSV.' ); }
+		$sample = $fp->fgets();
+		if ( false === $sample || '' === $sample ) { return new WP_Error( 'empty', 'Empty CSV.' ); }
 		$sample = preg_replace( '/^\xEF\xBB\xBF/', '', $sample );
-		if ( false !== strpos( $sample, "\0" ) ) { fclose( $fp ); return new WP_Error( 'encoding', 'Invalid CSV encoding.' ); }
+		if ( false !== strpos( $sample, "\0" ) ) { return new WP_Error( 'encoding', 'Invalid CSV encoding.' ); }
 		$delimiter = ',';
 		$highest = -1;
 		foreach ( array( ',', ';', "\t" ) as $candidate ) {
 			$count = count( str_getcsv( $sample, $candidate, '"', '' ) );
 			if ( $count > $highest ) { $delimiter = $candidate; $highest = $count; }
 		}
-		rewind( $fp );
-		$headers = fgetcsv( $fp, 0, $delimiter, '"', '' );
-		if ( ! is_array( $headers ) ) { fclose( $fp ); return new WP_Error( 'empty', 'Missing header row.' ); }
+		$fp->rewind();
+		$headers = $fp->fgetcsv( $delimiter, '"', '' );
+		if ( ! is_array( $headers ) ) { return new WP_Error( 'empty', 'Missing header row.' ); }
 		$headers[0] = preg_replace( '/^\xEF\xBB\xBF/', '', $headers[0] );
 		$lines = array();
 		$number = 1;
-		while ( ( $cells = fgetcsv( $fp, 0, $delimiter, '"', '' ) ) !== false ) {
-			$number++;
+		while ( ! $fp->eof() ) {
+			$cells = $fp->fgetcsv( $delimiter, '"', '' );
+			if ( false === $cells ) { break; }
+			++$number;
 			if ( 1 === count( $cells ) && ( null === $cells[0] || '' === trim( $cells[0] ) ) ) { continue; }
 			$lines[] = array( 'line' => $number, 'cells' => $cells );
-			if ( count( $lines ) > self::MAX_ROWS ) { fclose( $fp ); return new WP_Error( 'limit', 'Too many rows.' ); }
+			if ( count( $lines ) > self::MAX_ROWS ) { return new WP_Error( 'limit', 'Too many rows.' ); }
 		}
-		fclose( $fp );
 		return self::finalize_rows( $headers, $lines );
 	}
 
@@ -610,9 +617,12 @@ final class SMCQ_Importer {
 		if ( ! class_exists( 'ZipArchive' ) || ! function_exists( 'simplexml_load_string' ) ) {
 			return new WP_Error( 'extensions', 'XLSX requires PHP ZIP and SimpleXML.' );
 		}
-		$fp = fopen( $path, 'rb' );
-		$magic = $fp ? fread( $fp, 4 ) : '';
-		if ( $fp ) { fclose( $fp ); }
+		try {
+			$fp = new SplFileObject( $path, 'rb' );
+			$magic = $fp->fread( 4 );
+		} catch ( RuntimeException $error ) {
+			return new WP_Error( 'file', 'Cannot read XLSX file.' );
+		}
 		if ( "PK\x03\x04" !== $magic ) { return new WP_Error( 'format', 'Not a valid XLSX archive.' ); }
 		$zip = new ZipArchive();
 		if ( true !== $zip->open( $path ) ) { return new WP_Error( 'zip', 'Could not open XLSX.' ); }
