@@ -92,7 +92,7 @@ final class SMCQ_Practice {
 		if ( ! $post || 'smcq_question' !== $post->post_type || ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_revision( $id ) || ! current_user_can( 'edit_post', $id ) ) { return; }
 		$nonce = isset( $_POST['smcq_practice_access_nonce'] ) && is_string( $_POST['smcq_practice_access_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['smcq_practice_access_nonce'] ) ) : '';
 		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'smcq_practice_access_' . $id ) ) { return; }
-		update_post_meta( $id, '_smcq_practice_enabled', isset( $_POST['smcq_practice_enabled'] ) && '1' === (string) $_POST['smcq_practice_enabled'] ? 1 : 0 );
+		update_post_meta( $id, '_smcq_practice_enabled', isset( $_POST['smcq_practice_enabled'] ) && '1' === (string) sanitize_text_field( wp_unslash( $_POST['smcq_practice_enabled'] ) ) ? 1 : 0 );
 	}
 
 	public static function bulk_actions( $actions ) {
@@ -147,14 +147,14 @@ final class SMCQ_Practice {
 
 	private static function bookmarks( $user ) {
 		global $wpdb;
-		$rows = $wpdb->get_col( $wpdb->prepare( 'SELECT question_id FROM ' . self::table( 'bookmarks' ) . ' WHERE user_id = %d ORDER BY id DESC LIMIT %d', $user, self::MAX_POOL ) );
+		$rows = $wpdb->get_col( $wpdb->prepare( 'SELECT question_id FROM ' . '%i' . ' WHERE user_id = %d ORDER BY id DESC LIMIT %d', self::table( 'bookmarks' ), $user, self::MAX_POOL ) );
 		return array_values( array_unique( array_map( 'intval', is_array( $rows ) ? $rows : array() ) ) );
 	}
 
 	private static function history_rows( $user ) {
 		global $wpdb;
 		$rows = $wpdb->get_results( $wpdb->prepare(
-			'SELECT snapshot,answers FROM ' . self::table( 'attempts' ) . " WHERE user_id = %d AND status = 'submitted' ORDER BY id DESC LIMIT %d",
+			'SELECT snapshot,answers FROM ' . '%i' . " WHERE user_id = %d AND status = 'submitted' ORDER BY id DESC LIMIT %d", self::table( 'attempts' ),
 			$user, self::MAX_HISTORY
 		), ARRAY_A );
 		return is_array( $rows ) ? $rows : array();
@@ -304,12 +304,12 @@ final class SMCQ_Practice {
 
 	private static function load( $id, $user ) {
 		global $wpdb;
-		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::table( 'practice_sessions' ) . ' WHERE id = %d AND user_id = %d', $id, $user ), ARRAY_A );
+		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . '%i' . ' WHERE id = %d AND user_id = %d', self::table( 'practice_sessions' ), $id, $user ), ARRAY_A );
 	}
 
 	private static function active( $user, $mode ) {
 		global $wpdb;
-		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::table( 'practice_sessions' ) . ' WHERE active_key = %s AND user_id = %d AND mode = %s', self::active_key( $user, $mode ), $user, $mode ), ARRAY_A );
+		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . '%i' . ' WHERE active_key = %s AND user_id = %d AND mode = %s', self::table( 'practice_sessions' ), self::active_key( $user, $mode ), $user, $mode ), ARRAY_A );
 	}
 
 	/** Never send unattempted answers or hidden keys in an active session. */
@@ -341,7 +341,7 @@ final class SMCQ_Practice {
 		$history = self::analyze_history( self::history_rows( $user ) );
 		$bookmarks = self::bookmarks( $user );
 		$recent = $wpdb->get_results( $wpdb->prepare(
-			'SELECT id,mode,started_at,completed_at,result_json FROM ' . self::table( 'practice_sessions' ) . " WHERE user_id = %d AND status = 'completed' ORDER BY id DESC LIMIT 10", $user
+			'SELECT id,mode,started_at,completed_at,result_json FROM ' . '%i' . " WHERE user_id = %d AND status = 'completed' ORDER BY id DESC LIMIT 10", self::table( 'practice_sessions' ), $user
 		), ARRAY_A );
 		$trend = array();
 		foreach ( (array) $recent as $row ) {
@@ -414,7 +414,7 @@ final class SMCQ_Practice {
 		if ( (int) $row['version'] !== (int) $version ) { return self::error( 'smcq_practice_conflict', __( 'Practice changed in another tab. Reload to continue.', 'smart-mcq-manager' ), 409 ); }
 		$answers[(string) $qid] = $choice;
 		$updated = $wpdb->query( $wpdb->prepare(
-			'UPDATE ' . self::table( 'practice_sessions' ) . " SET answers = %s, version = version + 1 WHERE id = %d AND user_id = %d AND status = 'active' AND version = %d",
+			'UPDATE ' . '%i' . " SET answers = %s, version = version + 1 WHERE id = %d AND user_id = %d AND status = 'active' AND version = %d", self::table( 'practice_sessions' ),
 			wp_json_encode( $answers ), $id, $user, (int) $version
 		) );
 		if ( 1 !== $updated ) { return self::error( 'smcq_practice_conflict', __( 'Another answer was saved first. Reload your practice.', 'smart-mcq-manager' ), 409 ); }
@@ -435,7 +435,7 @@ final class SMCQ_Practice {
 			if ( ! is_array( $snapshot ) || ! isset( $snapshot['questions'] ) ) { return self::error( 'smcq_bad_snapshot', __( 'The practice snapshot is not valid.', 'smart-mcq-manager' ), 500 ); }
 			$grade = SMCQ_Results::grade( $snapshot, $answers );
 			$updated = $wpdb->query( $wpdb->prepare(
-				'UPDATE ' . self::table( 'practice_sessions' ) . " SET status = 'completed', active_key = NULL, result_json = %s, completed_at = %s, version = version + 1 WHERE id = %d AND user_id = %d AND status = 'active' AND version = %d",
+				'UPDATE ' . '%i' . " SET status = 'completed', active_key = NULL, result_json = %s, completed_at = %s, version = version + 1 WHERE id = %d AND user_id = %d AND status = 'active' AND version = %d", self::table( 'practice_sessions' ),
 				wp_json_encode( $grade ), gmdate( 'Y-m-d H:i:s' ), $id, $user, (int) $row['version']
 			) );
 			if ( 1 === $updated ) { return rest_ensure_response( self::view( self::load( $id, $user ) ) ); }
@@ -447,7 +447,7 @@ final class SMCQ_Practice {
 		global $wpdb;
 		$id = absint( $request['id'] );
 		if ( ! self::eligible( $id ) ) { return self::error( 'smcq_bookmark_unavailable', __( 'This question is not released for student practice.', 'smart-mcq-manager' ), 404 ); }
-		$wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO ' . self::table( 'bookmarks' ) . ' (user_id,question_id,created_at) VALUES (%d,%d,%s)', get_current_user_id(), $id, gmdate( 'Y-m-d H:i:s' ) ) );
+		$wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO ' . '%i' . ' (user_id,question_id,created_at) VALUES (%d,%d,%s)', self::table( 'bookmarks' ), get_current_user_id(), $id, gmdate( 'Y-m-d H:i:s' ) ) );
 		return rest_ensure_response( array( 'bookmarked' => true, 'questionId' => $id ) );
 	}
 
@@ -475,8 +475,8 @@ final class SMCQ_Practice {
 		$id = (int) $user->ID;
 		$page = max( 1, (int) $page );
 		$book = self::table( 'bookmarks' ); $sessions = self::table( 'practice_sessions' );
-		$bookmarks = 1 === $page ? $wpdb->get_col( $wpdb->prepare( "SELECT question_id FROM {$book} WHERE user_id = %d LIMIT 10000", $id ) ) : array();
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id,mode,started_at,completed_at,answers,result_json FROM {$sessions} WHERE user_id = %d ORDER BY id ASC LIMIT 25 OFFSET %d", $id, ( $page - 1 ) * 25 ), ARRAY_A );
+		$bookmarks = 1 === $page ? $wpdb->get_col( $wpdb->prepare( "SELECT question_id FROM %i WHERE user_id = %d LIMIT 10000", $book, $id ) ) : array();
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id,mode,started_at,completed_at,answers,result_json FROM %i WHERE user_id = %d ORDER BY id ASC LIMIT 25 OFFSET %d", $sessions, $id, ( $page - 1 ) * 25 ), ARRAY_A );
 		$data = array();
 		if ( $bookmarks ) { $data[] = array( 'group_id' => 'smcq-revision', 'group_label' => __( 'Practice', 'smart-mcq-manager' ), 'item_id' => 'smcq-bookmarks', 'data' => array( array( 'name' => __( 'Bookmarked Question IDs', 'smart-mcq-manager' ), 'value' => implode( ', ', $bookmarks ) ) ) ); }
 		foreach ( (array) $rows as $row ) {
