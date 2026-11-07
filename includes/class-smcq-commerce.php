@@ -90,8 +90,8 @@ final class SMCQ_Commerce {
 			return;
 		}
 		$mode = isset( $_POST['smcq_exam_access'] ) && is_string( $_POST['smcq_exam_access'] ) ? sanitize_key( wp_unslash( $_POST['smcq_exam_access'] ) ) : 'free';
-		$raw_ids = isset( $_POST['smcq_exam_products'] ) && is_string( $_POST['smcq_exam_products'] ) ? wp_unslash( $_POST['smcq_exam_products'] ) : '';
-		$days = isset( $_POST['smcq_exam_access_days'] ) && is_scalar( $_POST['smcq_exam_access_days'] ) ? wp_unslash( $_POST['smcq_exam_access_days'] ) : 0;
+		$raw_ids = isset( $_POST['smcq_exam_products'] ) && is_string( $_POST['smcq_exam_products'] ) ? sanitize_text_field( wp_unslash( $_POST['smcq_exam_products'] ) ) : '';
+		$days = isset( $_POST['smcq_exam_access_days'] ) && is_scalar( $_POST['smcq_exam_access_days'] ) ? sanitize_text_field( wp_unslash( $_POST['smcq_exam_access_days'] ) ) : 0;
 		// Fail closed: a premium exam cannot become free when product IDs are missing.
 		update_post_meta( $post_id, self::META_MODE, 'premium' === $mode ? 'premium' : 'free' );
 		update_post_meta( $post_id, self::META_PRODUCTS, self::product_ids( $raw_ids ) );
