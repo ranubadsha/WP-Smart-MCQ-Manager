@@ -63,26 +63,37 @@ final class SMCQ_Reports {
 		return array( 'where' => $sql, 'args' => $args );
 	}
 
-	private static function sql( $statement, $args ) {
-		global $wpdb;
-		return $args ? $wpdb->prepare( $statement, $args ) : $statement;
-	}
-
-	/** Query submitted attempts only; result grade is computed post-query from the snapshot. */
+	/** Bounded submitted results; bind every optional filter and the table identifier. */
 	private static function fetch( $filters, $limit, $offset = 0 ) {
 		global $wpdb;
-		$filter = self::sql_filter( $filters );
-		$sql = 'SELECT id,exam_id,user_id,started_at,submitted_at,completion_reason,snapshot,answers,result_json FROM ' . self::table() . $filter['where'] . ' ORDER BY id DESC LIMIT %d OFFSET %d';
-		$args = array_merge( $filter['args'], array( max( 1, (int) $limit ), max( 0, (int) $offset ) ) );
-		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A );
+		$exam = absint( $filters['exam'] );
+		$student = absint( $filters['student'] );
+		$from = $filters['from'] ? $filters['from'] . ' 00:00:00' : '';
+		$to = $filters['to'] ? gmdate( 'Y-m-d', strtotime( $filters['to'] . ' +1 day' ) ) . ' 00:00:00' : '';
+		$rows = $wpdb->get_results( $wpdb->prepare(
+			"SELECT id,exam_id,user_id,started_at,submitted_at,completion_reason,snapshot,answers,result_json FROM %i
+			WHERE status = 'submitted'
+			AND (%d = 0 OR exam_id = %d) AND (%d = 0 OR user_id = %d)
+			AND (%s = '' OR submitted_at >= %s) AND (%s = '' OR submitted_at < %s)
+			ORDER BY id DESC LIMIT %d OFFSET %d",
+			self::table(), $exam, $exam, $student, $student, $from, $from, $to, $to,
+			max( 1, (int) $limit ), max( 0, (int) $offset )
+		), ARRAY_A );
 		return is_array( $rows ) ? $rows : array();
 	}
 
 	private static function count( $filters ) {
 		global $wpdb;
-		$filter = self::sql_filter( $filters );
-		$sql = 'SELECT COUNT(*) FROM ' . self::table() . $filter['where'];
-		return (int) $wpdb->get_var( self::sql( $sql, $filter['args'] ) );
+		$exam = absint( $filters['exam'] );
+		$student = absint( $filters['student'] );
+		$from = $filters['from'] ? $filters['from'] . ' 00:00:00' : '';
+		$to = $filters['to'] ? gmdate( 'Y-m-d', strtotime( $filters['to'] . ' +1 day' ) ) . ' 00:00:00' : '';
+		return (int) $wpdb->get_var( $wpdb->prepare(
+			"SELECT COUNT(*) FROM %i WHERE status = 'submitted'
+			AND (%d = 0 OR exam_id = %d) AND (%d = 0 OR user_id = %d)
+			AND (%s = '' OR submitted_at >= %s) AND (%s = '' OR submitted_at < %s)",
+			self::table(), $exam, $exam, $student, $student, $from, $from, $to, $to
+		) );
 	}
 
 	/** Pure table conversion; cached user info / exam titles passed from trusted caller. */
@@ -218,6 +229,7 @@ final class SMCQ_Reports {
 		}
 		echo '</tbody></table></div>';
 		$base = add_query_arg( array( 'post_type' => 'smcq_question', 'page' => 'smcq-exam-reports', 'smcq_exam' => $filters['exam'], 'smcq_student' => $filters['student'], 'smcq_result' => $filters['result'], 'smcq_from' => $filters['from'], 'smcq_to' => $filters['to'] ), admin_url( 'edit.php' ) );
+		// translators: %d: the current report page number.
 		echo '<p class="tablenav"><a class="button" href="' . esc_url( add_query_arg( 'smcq_page', max( 1, $page - 1 ), $base ) ) . '"' . ( $page <= 1 ? ' aria-disabled="true" tabindex="-1"' : '' ) . '>' . esc_html__( 'Previous', 'smart-mcq-manager' ) . '</a> ' . esc_html( sprintf( __( 'Page %d', 'smart-mcq-manager' ), $page ) ) . ' <a class="button" href="' . esc_url( add_query_arg( 'smcq_page', $page + 1, $base ) ) . '"' . ( count( $rows ) < self::PAGE_SIZE ? ' aria-disabled="true" tabindex="-1"' : '' ) . '>' . esc_html__( 'Next', 'smart-mcq-manager' ) . '</a></p>';
 		if ( $sample ) { self::category_table( $sample ); }
 		echo '</div>';
@@ -260,8 +272,8 @@ final class SMCQ_Reports {
 	}
 
 	public static function download() {
-		$scope = isset( $_GET['smcq_scope'] ) && is_scalar( $_GET['smcq_scope'] ) ? (string) $_GET['smcq_scope'] : '';
-		$format = isset( $_GET['smcq_format'] ) && is_scalar( $_GET['smcq_format'] ) ? (string) $_GET['smcq_format'] : '';
+		$scope = isset( $_GET['smcq_scope'] ) && is_scalar( $_GET['smcq_scope'] ) ? sanitize_key( wp_unslash( $_GET['smcq_scope'] ) ) : '';
+		$format = isset( $_GET['smcq_format'] ) && is_scalar( $_GET['smcq_format'] ) ? sanitize_key( wp_unslash( $_GET['smcq_format'] ) ) : '';
 		if ( ! is_user_logged_in() ) { wp_die( esc_html__( 'Please log in.', 'smart-mcq-manager' ), '', array( 'response' => 401 ) ); }
 		if ( ! in_array( $scope, array( 'admin', 'me' ), true ) || ! in_array( $format, array( 'csv', 'xlsx', 'print' ), true ) ) { wp_die( esc_html__( 'Invalid report request.', 'smart-mcq-manager' ), '', array( 'response' => 400 ) ); }
 		if ( 'admin' === $scope && ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'Permission denied.', 'smart-mcq-manager' ), '', array( 'response' => 403 ) ); }
@@ -288,10 +300,12 @@ final class SMCQ_Reports {
 		header( 'X-Robots-Tag: noindex, nofollow', true );
 		header( 'Content-Type: text/csv; charset=UTF-8' );
 		header( 'Content-Disposition: attachment; filename="' . $filename . '.csv"' );
-		$out = fopen( 'php://output', 'w' );
-		fwrite( $out, "\xEF\xBB\xBF" );
-		foreach ( $rows as $row ) { fputcsv( $out, array_map( array( __CLASS__, 'csv_safe' ), $row ) ); }
-		fclose( $out );
+		$out = new SplTempFileObject();
+		foreach ( $rows as $row ) { $out->fputcsv( array_map( array( __CLASS__, 'csv_safe' ), $row ) ); }
+		$out->rewind();
+		echo "\xEF\xBB\xBF";
+		while ( ! $out->eof() ) { echo $out->fgets(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSV attachment bytes, not HTML.
+		}
 		exit;
 	}
 
@@ -329,14 +343,20 @@ final class SMCQ_Reports {
 	private static function download_xlsx( $rows, $filename ) {
 		if ( ! class_exists( 'ZipArchive' ) ) { wp_die( esc_html__( 'PHP ZIP extension is required for Excel downloads. Use CSV instead.', 'smart-mcq-manager' ) ); }
 		$temp = tempnam( get_temp_dir(), 'smcqreport-' );
-		if ( ! $temp || ! self::build_xlsx( $rows, $temp ) ) { if ( $temp ) { @unlink($temp); } wp_die( esc_html__( 'Could not generate Excel report.', 'smart-mcq-manager' ) ); }
+		if ( ! $temp || ! self::build_xlsx( $rows, $temp ) ) { if ( $temp ) { wp_delete_file( $temp ); } wp_die( esc_html__( 'Could not generate Excel report.', 'smart-mcq-manager' ) ); }
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		WP_Filesystem();
+		global $wp_filesystem;
+		$bytes = $wp_filesystem ? $wp_filesystem->get_contents( $temp ) : false;
+		wp_delete_file( $temp );
+		if ( false === $bytes ) { wp_die( esc_html__( 'Unable to read the generated report.', 'smart-mcq-manager' ) ); }
 		nocache_headers();
 		header( 'X-Robots-Tag: noindex, nofollow', true );
 		header( 'Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' );
 		header( 'Content-Disposition: attachment; filename="' . $filename . '.xlsx"' );
-		header( 'Content-Length: ' . filesize($temp) );
-		readfile($temp);
-		@unlink($temp);
+		header( 'Content-Length: ' . strlen( $bytes ) );
+		echo $bytes; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Binary XLSX payload, not HTML.
+
 		exit;
 	}
 
