@@ -103,8 +103,8 @@ final class SMCQ_Security {
 	public static function cleanup() {
 		global $wpdb;
 		$cutoff = gmdate( 'Y-m-d H:i:s', time() - self::RETENTION_DAYS * DAY_IN_SECONDS );
-		$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . self::events_table() . ' WHERE created_at < %s', $cutoff ) );
-		$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . self::leases_table() . ' WHERE updated_at < %s', $cutoff ) );
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . '%i' . ' WHERE created_at < %s', self::events_table(), $cutoff ) );
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . '%i' . ' WHERE updated_at < %s', self::leases_table(), $cutoff ) );
 	}
 
 	/** Caller is responsible for checking authenticated attempt ownership. */
@@ -122,15 +122,15 @@ final class SMCQ_Security {
 		$now = time();
 		$now_sql = gmdate( 'Y-m-d H:i:s', $now );
 		// UNIQUE attempt_id protects concurrent first claims across tabs.
-		$wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO ' . $table . ' (attempt_id,user_id,token_hash,updated_at) VALUES (%d,%d,%s,%s)', $attempt, $user, $hash, $now_sql ) );
-		$lease = $wpdb->get_row( $wpdb->prepare( 'SELECT token_hash, updated_at FROM ' . $table . ' WHERE attempt_id = %d', $attempt ), ARRAY_A );
+		$wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO ' . '%i' . ' (attempt_id,user_id,token_hash,updated_at) VALUES (%d,%d,%s,%s)', $table, $attempt, $user, $hash, $now_sql ) );
+		$lease = $wpdb->get_row( $wpdb->prepare( 'SELECT token_hash, updated_at FROM ' . '%i' . ' WHERE attempt_id = %d', $table, $attempt ), ARRAY_A );
 		if ( ! $lease ) {
 			return new WP_Error( 'smcq_session_unavailable', __( 'Could not validate this exam session. Try again.', 'smart-mcq-manager' ), array( 'status' => 503 ) );
 		}
 		$updated = strtotime( $lease['updated_at'] . ' UTC' );
 		$decision = self::lease_decision( $lease['token_hash'], $updated, $hash, $now, $force_takeover );
 		if ( 'same' === $decision || 'new' === $decision ) {
-			$wpdb->query( $wpdb->prepare( 'UPDATE ' . $table . ' SET updated_at = %s WHERE attempt_id = %d AND token_hash = %s', $now_sql, $attempt, $hash ) );
+			$wpdb->query( $wpdb->prepare( 'UPDATE ' . '%i' . ' SET updated_at = %s WHERE attempt_id = %d AND token_hash = %s', $table, $now_sql, $attempt, $hash ) );
 			return true;
 		}
 		if ( 'conflict' === $decision ) {
@@ -138,7 +138,7 @@ final class SMCQ_Security {
 			return new WP_Error( 'smcq_session_conflict', __( 'This attempt is active in another tab or device. Choose Continue here to take over.', 'smart-mcq-manager' ), array( 'status' => 409, 'attemptId' => $attempt ) );
 		}
 		// Compare-and-swap prevents two concurrent takeovers from both succeeding.
-		$swapped = $wpdb->query( $wpdb->prepare( 'UPDATE ' . $table . ' SET token_hash = %s, updated_at = %s WHERE attempt_id = %d AND token_hash = %s AND updated_at = %s', $hash, $now_sql, $attempt, $lease['token_hash'], $lease['updated_at'] ) );
+		$swapped = $wpdb->query( $wpdb->prepare( 'UPDATE ' . '%i' . ' SET token_hash = %s, updated_at = %s WHERE attempt_id = %d AND token_hash = %s AND updated_at = %s', $table, $hash, $now_sql, $attempt, $lease['token_hash'], $lease['updated_at'] ) );
 		if ( 1 !== $swapped ) {
 			return new WP_Error( 'smcq_session_conflict', __( 'Another session changed. Retry to continue on this device.', 'smart-mcq-manager' ), array( 'status' => 409, 'attemptId' => $attempt ) );
 		}
@@ -157,9 +157,9 @@ final class SMCQ_Security {
 		global $wpdb;
 		$table = self::events_table();
 		$attempt = (int) $row['id'];
-		$count = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . $table . ' WHERE attempt_id = %d', $attempt ) );
+		$count = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . '%i' . ' WHERE attempt_id = %d', $table, $attempt ) );
 		if ( $count >= self::MAX_EVENTS ) { return false; }
-		$last = $wpdb->get_var( $wpdb->prepare( 'SELECT created_at FROM ' . $table . ' WHERE attempt_id = %d AND event_type = %s ORDER BY id DESC LIMIT 1', $attempt, $type ) );
+		$last = $wpdb->get_var( $wpdb->prepare( 'SELECT created_at FROM ' . '%i' . ' WHERE attempt_id = %d AND event_type = %s ORDER BY id DESC LIMIT 1', $table, $attempt, $type ) );
 		if ( $last && time() - (int) strtotime( $last . ' UTC' ) < 5 ) { return false; }
 		return (bool) $wpdb->insert( $table, array(
 			'attempt_id' => $attempt, 'exam_id' => (int) $row['exam_id'], 'user_id' => (int) $row['user_id'],
@@ -228,15 +228,19 @@ final class SMCQ_Security {
 
 	private static function find_events( $filters, $limit, $offset = 0 ) {
 		global $wpdb;
-		$where = array( '1=1' );
-		$args = array();
-		if ( $filters['exam_id'] ) { $where[] = 'exam_id = %d'; $args[] = $filters['exam_id']; }
-		if ( $filters['user_id'] ) { $where[] = 'user_id = %d'; $args[] = $filters['user_id']; }
-		if ( $filters['event_type'] ) { $where[] = 'event_type = %s'; $args[] = $filters['event_type']; }
-		$args[] = $limit;
-		$args[] = $offset;
-		$sql = 'SELECT id,exam_id,user_id,attempt_id,event_type,created_at FROM ' . self::events_table() . ' WHERE ' . implode( ' AND ', $where ) . ' ORDER BY id DESC LIMIT %d OFFSET %d';
-		return $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A );
+		$exam = absint( $filters['exam_id'] );
+		$user = absint( $filters['user_id'] );
+		$type = self::valid_event( $filters['event_type'] ) ? $filters['event_type'] : '';
+		// Identifier and user filters are bound independently; no SQL assembled from request values.
+		return $wpdb->get_results( $wpdb->prepare(
+			"SELECT id,exam_id,user_id,attempt_id,event_type,created_at FROM %i
+			WHERE (%d = 0 OR exam_id = %d)
+			AND (%d = 0 OR user_id = %d)
+			AND (%s = '' OR event_type = %s)
+			ORDER BY id DESC LIMIT %d OFFSET %d",
+			self::events_table(), $exam, $exam, $user, $user, $type, $type,
+			max( 1, (int) $limit ), max( 0, (int) $offset )
+		), ARRAY_A );
 	}
 
 	public static function admin_page() {
@@ -276,11 +280,13 @@ final class SMCQ_Security {
 		nocache_headers();
 		header( 'Content-Type: text/csv; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename="smcq-security-events.csv"' );
-		$out = fopen( 'php://output', 'w' );
-		fwrite( $out, "\xEF\xBB\xBF" );
-		fputcsv( $out, array( 'Time (UTC)', 'Exam ID', 'Student ID', 'Attempt ID', 'Event' ) );
-		foreach ( $rows as $r ) { fputcsv( $out, array( $r['created_at'], (int) $r['exam_id'], (int) $r['user_id'], (int) $r['attempt_id'], $r['event_type'] ) ); }
-		fclose( $out );
+		$out = new SplTempFileObject();
+		$out->fputcsv( array( 'Time (UTC)', 'Exam ID', 'Student ID', 'Attempt ID', 'Event' ) );
+		foreach ( $rows as $r ) { $out->fputcsv( array( $r['created_at'], (int) $r['exam_id'], (int) $r['user_id'], (int) $r['attempt_id'], $r['event_type'] ) ); }
+		$out->rewind();
+		echo "\xEF\xBB\xBF";
+		while ( ! $out->eof() ) { echo $out->fgets(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSV attachment bytes, not HTML.
+		}
 		exit;
 	}
 
@@ -299,7 +305,7 @@ final class SMCQ_Security {
 		$user = get_user_by( 'email', $email );
 		if ( ! $user ) { return array( 'data' => array(), 'done' => true ); }
 		$page = max( 1, (int) $page );
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id,exam_id,attempt_id,event_type,created_at FROM ' . self::events_table() . ' WHERE user_id = %d ORDER BY id ASC LIMIT 26 OFFSET %d', $user->ID, ( $page - 1 ) * 25 ), ARRAY_A );
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id,exam_id,attempt_id,event_type,created_at FROM ' . '%i' . ' WHERE user_id = %d ORDER BY id ASC LIMIT 26 OFFSET %d', self::events_table(), $user->ID, ( $page - 1 ) * 25 ), ARRAY_A );
 		$data = array();
 		foreach ( array_slice( $rows, 0, 25 ) as $row ) {
 			$data[] = array( 'group_id' => 'smcq-security', 'group_label' => 'Exam Security Events', 'item_id' => 'smcq-event-' . $row['id'], 'data' => array(
