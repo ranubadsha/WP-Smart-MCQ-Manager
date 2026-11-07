@@ -57,7 +57,7 @@ final class SMCQ_Player {
 		) {$charset};";
 		dbDelta( $sql );
 		// Keep retrying the migration if the table or result column could not be created.
-		$column = $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM ' . $table . ' LIKE %s', 'result_json' ) );
+		$column = $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM ' . '%i' . ' LIKE %s', $table, 'result_json' ) );
 		if ( 'result_json' === $column && SMCQ_Health::has_indexes( $table, array( 'user_status_id', 'exam_status_id', 'status_id', 'status_deadline' ) ) ) {
 			update_option( 'smcq_attempt_schema', self::SCHEMA_VERSION, false );
 		}
@@ -218,12 +218,12 @@ final class SMCQ_Player {
 
 	private static function load_attempt( $id, $user ) {
 		global $wpdb;
-		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE id = %d AND user_id = %d', $id, $user ), ARRAY_A );
+		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . '%i' . ' WHERE id = %d AND user_id = %d', self::table(), $id, $user ), ARRAY_A );
 	}
 
 	private static function active_attempt( $exam, $user ) {
 		global $wpdb;
-		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE active_key = %s AND exam_id = %d AND user_id = %d', self::active_key( $exam, $user ), $exam, $user ), ARRAY_A );
+		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . '%i' . ' WHERE active_key = %s AND exam_id = %d AND user_id = %d', self::table(), self::active_key( $exam, $user ), $exam, $user ), ARRAY_A );
 	}
 
 	/** Finalize a frozen attempt with an optimistic version check. Recompute after a concurrent save. */
@@ -247,7 +247,7 @@ final class SMCQ_Player {
 			$submitted = 'timeout' === $reason ? $row['deadline_at'] : self::utc_sql( $now );
 			// The same version condition protects answer saving and finalization from races.
 			$updated = $wpdb->query( $wpdb->prepare(
-				'UPDATE ' . self::table() . " SET status = 'submitted', active_key = NULL, completion_reason = %s, submitted_at = %s, result_json = %s, version = version + 1 WHERE id = %d AND user_id = %d AND status = 'active' AND version = %d",
+				'UPDATE ' . '%i' . " SET status = 'submitted', active_key = NULL, completion_reason = %s, submitted_at = %s, result_json = %s, version = version + 1 WHERE id = %d AND user_id = %d AND status = 'active' AND version = %d", self::table(),
 				$reason, $submitted, $grade, (int) $row['id'], (int) $row['user_id'], (int) $row['version']
 			) );
 			$row = self::load_attempt( (int) $row['id'], (int) $row['user_id'] );
@@ -273,7 +273,7 @@ final class SMCQ_Player {
 		}
 		global $wpdb;
 		$wpdb->query( $wpdb->prepare(
-			'UPDATE ' . self::table() . ' SET result_json = %s WHERE id = %d AND user_id = %d AND status = %s AND result_json IS NULL',
+			'UPDATE ' . '%i' . ' SET result_json = %s WHERE id = %d AND user_id = %d AND status = %s AND result_json IS NULL', self::table(),
 			wp_json_encode( SMCQ_Results::grade( $snapshot, json_decode( $row['answers'], true ) ) ), (int) $row['id'], (int) $row['user_id'], 'submitted'
 		) );
 		return self::load_attempt( (int) $row['id'], (int) $row['user_id'] );
@@ -406,8 +406,8 @@ final class SMCQ_Player {
 				return rest_ensure_response( self::view( $row ) );
 			}
 		}
-		$count = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . self::table() . ' WHERE user_id = %d AND exam_id = %d', $user, $exam_id ) );
-		$last = $wpdb->get_row( $wpdb->prepare( 'SELECT id,status,completion_reason FROM ' . self::table() . ' WHERE user_id = %d AND exam_id = %d ORDER BY id DESC LIMIT 1', $user, $exam_id ), ARRAY_A );
+		$count = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . '%i' . ' WHERE user_id = %d AND exam_id = %d', self::table(), $user, $exam_id ) );
+		$last = $wpdb->get_row( $wpdb->prepare( 'SELECT id,status,completion_reason FROM ' . '%i' . ' WHERE user_id = %d AND exam_id = %d ORDER BY id DESC LIMIT 1', self::table(), $user, $exam_id ), ARRAY_A );
 		$config = self::config( $exam_id );
 		$window = self::check_window( $config, self::utc_now() );
 		return rest_ensure_response( array(
@@ -447,7 +447,7 @@ final class SMCQ_Player {
 				return rest_ensure_response( self::view( $existing ) );
 			}
 		}
-		$used = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . self::table() . ' WHERE user_id = %d AND exam_id = %d', $user, $exam_id ) );
+		$used = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . '%i' . ' WHERE user_id = %d AND exam_id = %d', self::table(), $user, $exam_id ) );
 		if ( 0 !== $config['attempt_limit'] && $used >= $config['attempt_limit'] ) {
 			return self::error( 'smcq_attempt_limit', __( 'You have reached the attempt limit.', 'smart-mcq-manager' ), 403 );
 		}
@@ -526,7 +526,7 @@ final class SMCQ_Player {
 		}
 		$new_version = $version + 1;
 		$updated = $wpdb->query( $wpdb->prepare(
-			'UPDATE ' . self::table() . ' SET answers = %s, version = %d WHERE id = %d AND user_id = %d AND status = %s AND version = %d AND deadline_at > %s',
+			'UPDATE ' . '%i' . ' SET answers = %s, version = %d WHERE id = %d AND user_id = %d AND status = %s AND version = %d AND deadline_at > %s', self::table(),
 			wp_json_encode( $answers ), $new_version, $attempt_id, $user, 'active', $version, self::utc_sql( self::utc_now() )
 		) );
 		if ( 1 !== $updated ) {
@@ -606,7 +606,7 @@ final class SMCQ_Player {
 		$page = max( 1, min( 10000, absint( $request->get_param( 'page' ) ) ) );
 		$per_page = 10;
 		$rows = $wpdb->get_results( $wpdb->prepare(
-			'SELECT * FROM ' . self::table() . " WHERE user_id = %d AND status = 'submitted' ORDER BY id DESC LIMIT %d OFFSET %d",
+			'SELECT * FROM ' . '%i' . " WHERE user_id = %d AND status = 'submitted' ORDER BY id DESC LIMIT %d OFFSET %d", self::table(),
 			$user, $per_page + 1, ( $page - 1 ) * $per_page
 		), ARRAY_A );
 		$has_more = count( $rows ) > $per_page;
@@ -645,7 +645,7 @@ final class SMCQ_Player {
 		$user = self::privacy_user( $email );
 		if ( ! $user ) { return array( 'data' => array(), 'done' => true ); }
 		$page = max( 1, (int) $page );
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE user_id = %d ORDER BY id ASC LIMIT 25 OFFSET %d', $user, ( $page - 1 ) * 25 ), ARRAY_A );
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . '%i' . ' WHERE user_id = %d ORDER BY id ASC LIMIT 25 OFFSET %d', self::table(), $user, ( $page - 1 ) * 25 ), ARRAY_A );
 		$data = array();
 		foreach ( $rows as $row ) {
 			$data[] = array( 'group_id' => 'smart-mcq-attempts', 'group_label' => __( 'Exam Attempts', 'smart-mcq-manager' ), 'item_id' => 'smcq-attempt-' . $row['id'], 'data' => array(
