@@ -47,7 +47,7 @@ final class SMCQ_Question_Reports {
 			return new WP_Error( 'smcq_report_invalid', __( 'Enter a reason and a description of 15–2,000 characters.', 'smart-mcq-manager' ), array( 'status' => 400 ) );
 		}
 		$table = $wpdb->prefix . 'smcq_attempts';
-		$row = $wpdb->get_row( $wpdb->prepare( "SELECT snapshot FROM {$table} WHERE id = %d AND user_id = %d AND status = 'submitted'", $attempt, $user ), ARRAY_A );
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT snapshot FROM %i WHERE id = %d AND user_id = %d AND status = 'submitted'", $table, $attempt, $user ), ARRAY_A );
 		if ( ! $row ) { return new WP_Error( 'smcq_report_not_allowed', __( 'Only completed, owned attempts can be reported.', 'smart-mcq-manager' ), array( 'status' => 403 ) ); }
 		$snapshot = json_decode( $row['snapshot'], true );
 		$present = false;
