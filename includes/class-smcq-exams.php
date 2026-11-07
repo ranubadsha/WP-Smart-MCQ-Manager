@@ -210,7 +210,7 @@ final class SMCQ_Exams {
 			'order'                  => 'DESC',
 			'no_found_rows'          => true,
 			'ignore_sticky_posts'    => true,
-			'suppress_filters'       => true,
+			'suppress_filters'       => false,
 		);
 		$tax = array();
 		foreach ( array( 'subject' => 'smcq_subject', 'topic' => 'smcq_topic', 'source' => 'smcq_exam_source' ) as $key => $taxonomy ) {
@@ -391,7 +391,7 @@ final class SMCQ_Exams {
 		$query = new WP_Query( array(
 			'post_type' => 'smcq_question', 'post_status' => 'publish',
 			's' => $term, 'posts_per_page' => 30, 'no_found_rows' => true,
-			'ignore_sticky_posts' => true, 'suppress_filters' => true,
+			'ignore_sticky_posts' => true, 'suppress_filters' => false,
 		) );
 		$results = array();
 		foreach ( $query->posts as $post ) {
