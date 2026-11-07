@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Smart MCQ Manager 1.4.1\n"
+"Project-Id-Version: Smart MCQ Manager 1.4.2\n"
 "Report-Msgid-Bugs-To: https://github.com/ranubadsha/WP-Smart-MCQ-Manager/issues\n"
 "POT-Creation-Date: 2026-11-07 00:00+0000\n"
 "MIME-Version: 1.0\n"
@@ -13,7 +13,7 @@ msgid "%1$d / %2$d rows processed."
 msgstr ""
 
 #: includes/class-smcq-gamification.php:30
-msgid "%d completed, %d passed (latest 500 completed attempts)"
+msgid "%1$d completed, %2$d passed (latest 500 completed attempts)"
 msgstr ""
 
 #: includes/class-smcq-importer.php:204
