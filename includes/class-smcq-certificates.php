@@ -15,7 +15,7 @@ final class SMCQ_Certificates {
 		if ( ! $id ) { return '<p>' . esc_html__( 'Provide a completed examination attempt ID in the shortcode.', 'smart-mcq-manager' ) . '</p>'; }
 		global $wpdb;
 		$table = $wpdb->prefix . 'smcq_attempts';
-		$row = $wpdb->get_row( $wpdb->prepare( "SELECT id,exam_id,user_id,status,submitted_at,result_json FROM {$table} WHERE id=%d AND user_id=%d AND status='submitted'", $id, get_current_user_id() ), ARRAY_A );
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT id,exam_id,user_id,status,submitted_at,result_json FROM %i WHERE id=%d AND user_id=%d AND status='submitted'", $table, $id, get_current_user_id() ), ARRAY_A );
 		if ( ! self::eligible( $row ) ) { return '<p>' . esc_html__( 'No eligible certificate was found for your account.', 'smart-mcq-manager' ) . '</p>'; }
 		$result = json_decode( $row['result_json'], true );
 		$account = wp_get_current_user();
